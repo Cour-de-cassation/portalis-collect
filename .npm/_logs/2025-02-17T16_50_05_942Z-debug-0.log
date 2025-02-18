@@ -1,0 +1,18 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@10.8.2
+2 info using node@v20.18.3
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/node/.npmrc
+5 silly config load:file:/usr/local/etc/npmrc
+6 verbose title npm run start:api:watch
+7 verbose argv "run" "start:api:watch"
+8 verbose logfile logs-max:10 dir:/home/node/.npm/_logs/2025-02-17T16_50_05_942Z-
+9 verbose logfile /home/node/.npm/_logs/2025-02-17T16_50_05_942Z-debug-0.log
+10 silly logfile start cleaning logs, removing 1 files
+11 silly logfile done cleaning log files
+12 verbose cwd /home/node
+13 verbose os Linux 6.1.0-30-amd64
+14 verbose node v20.18.3
+15 verbose npm  v10.8.2
+16 verbose exit 143
+17 verbose code 143
