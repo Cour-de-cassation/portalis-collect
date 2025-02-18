@@ -3,6 +3,7 @@ import { v4 as uuid } from "uuid";
 import { getFileByName, getFileNames, saveFile } from "../library/fileRepository";
 import { pdfToMarkdown } from "../library/pdf";
 import { logger } from "../library/logger";
+import { mardownToPlainText } from "../library/markdown";
 
 const FILE_MAX_SIZE = {
   size: 10000000,
@@ -42,9 +43,11 @@ export function saveRawCph(cphFile: CphFile) {
   return saveFile(S3_BUCKET_NAME_RAW, name, cphFile.buffer, "application/pdf");
 }
 
-async function normalizeRawCphFile(cphFile: Buffer) {
+async function normalizeRawCphFile(fileName: string, cphFile: Buffer) {
   try {
-    const markdown = await pdfToMarkdown(cphFile)
+    const markdown = await pdfToMarkdown(fileName, cphFile)
+    const decisionContent = await mardownToPlainText(markdown)
+    
     return true
   } catch(err) {
     logger.error(err, `${err}`)
@@ -56,6 +59,6 @@ export async function normalizeRawCphFiles() {
   const fileNames = await getFileNames(S3_BUCKET_NAME_RAW)
   return fileNames.map(async fileName => {
     const file = await getFileByName(S3_BUCKET_NAME_RAW, fileName)
-    return normalizeRawCphFile(Buffer.from(file.buffer))
+    return normalizeRawCphFile(fileName, Buffer.from(file.buffer))
   })
 }
