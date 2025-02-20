@@ -37,7 +37,7 @@ export function saveFile(
   name: string,
   buffer: Buffer,
   contentType: string = "application/octet-stream"
-) {
+): Promise<unknown> {
   return s3Client.send(
     new PutObjectCommand({
       Bucket: bucket,
@@ -48,45 +48,52 @@ export function saveFile(
   );
 }
 
-export async function deleteFile(
-  bucket: string,
-  name: string,
-) {
+export async function deleteFile(bucket: string, name: string) {
   return s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: name }));
 }
 
 export async function getFileByName(
   bucket: string,
-  name: string,
-): Promise<Uint8Array> {
+  name: string
+): Promise<Buffer> {
   const fileFromS3 = await s3Client.send(
     new GetObjectCommand({ Bucket: bucket, Key: name })
   );
-  if (!fileFromS3.Body) throw unexpectedError(new Error(`File: ${name} seems empty or its body cannot be read.`))
-  return fileFromS3.Body.transformToByteArray();
+  if (!fileFromS3.Body)
+    throw unexpectedError(
+      new Error(`File: ${name} seems empty or its body cannot be read.`)
+    );
+  const byteArray = await fileFromS3.Body.transformToByteArray();
+  return Buffer.from(byteArray.buffer);
 }
 
 export async function getFileNames(
   bucket: string,
-  startAfterFileName?: string,
   nextContinuationToken?: string
 ): Promise<string[]> {
   const res = await s3Client.send(
     new ListObjectsV2Command({
       Bucket: bucket,
-      StartAfter: startAfterFileName,
       ContinuationToken: nextContinuationToken,
     })
   );
-  const namesChunk = (res.Contents ?? []).map(_ => _.Key).filter(_ => _ != null)
+  const namesChunk = (res.Contents ?? [])
+    .map((_) => _.Key)
+    .filter((_) => _ != null);
   return res.NextContinuationToken
     ? [
         ...namesChunk,
-        ...(await getFileNames(
-          bucket,
-          startAfterFileName,
-          res.NextContinuationToken
-        )),
+        ...(await getFileNames(bucket, res.NextContinuationToken)),
       ]
     : namesChunk;
+}
+
+export async function changeBucket(
+  currentBucket: string,
+  newBucket: string,
+  fileName: string,
+  contentType: string
+): Promise<unknown> {
+  const file = await getFileByName(currentBucket, fileName);
+  return saveFile(newBucket, fileName, file, contentType);
 }

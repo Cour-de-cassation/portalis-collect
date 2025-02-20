@@ -1,14 +1,15 @@
 import { CronJob } from "cron";
-import { normalizeRawCphFiles } from "./service/cph";
+import { normalizeRawCphFiles } from "./service/cph/handler";
 import { logger } from "./library/logger";
 import { missingValue } from "./library/error";
 
 if (process.env.NODE_ENV == null)
   throw missingValue("process.env.NODE_ENV", new Error());
 
-const { NODE_ENV } = process.env
+const { NODE_ENV } = process.env;
 
-const CRON_EVERY_HOUR = NODE_ENV === "local" ? new Date(Date.now() + 1000) : "0 * * * *";
+const CRON_EVERY_HOUR =
+  NODE_ENV === "local" ? new Date(Date.now() + 1000) : "0 * * * *";
 
 async function startNormalization() {
   CronJob.from({
@@ -19,7 +20,7 @@ async function startNormalization() {
           operationName: "startNormalization",
           msg: "Normalization starting",
         });
-        await normalizeRawCphFiles()
+        await normalizeRawCphFiles();
       } catch (error: any) {
         logger.error({
           msg: error instanceof Error ? error.message : "Unknown error format",
