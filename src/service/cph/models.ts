@@ -57,8 +57,8 @@ const schemaPseudoCustomRules = zod.object({
   professionnelMagistratGreffier: zod.boolean(),
   motifsDebatsChambreConseil: zod.boolean(),
   motifsSecretAffaires: zod.boolean(),
-  //   conserverElement: "\#dateCivile|automobile",
-  //   supprimerElement: \#magistratGreffe|120.000€"
+  // conserverElement: "\#dateCivile|automobile",
+  // supprimerElement: zod.array(zod.string())
 });
 export type PseudoCustomRules = zod.infer<typeof schemaPseudoCustomRules>;
 export function isPseudoCustomRules(
