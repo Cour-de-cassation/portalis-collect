@@ -20,7 +20,9 @@ async function startNormalization() {
           operationName: "startNormalization",
           msg: "Normalization starting",
         });
-        await normalizeRawCphFiles();
+        (await normalizeRawCphFiles()).forEach((_) =>
+          logger.error({ msg: _.message, data: _ })
+        );
       } catch (error: any) {
         logger.error({
           msg: error instanceof Error ? error.message : "Unknown error format",

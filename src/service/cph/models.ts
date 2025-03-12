@@ -1,5 +1,5 @@
 import zod from "zod";
-import { notSupported } from "../../library/error";
+import { NotSupported, notSupported } from "../../library/error";
 import {
   Categories,
   DecisionDTO,
@@ -7,81 +7,51 @@ import {
   Sources,
 } from "dbsder-api-types";
 
-const FILE_MAX_SIZE = {
-  size: 10000000,
-  readSize: "10Mo",
-} as const;
-
-type CphFile = {
-  mimetype: string;
-  size: number;
-  buffer: Buffer;
-};
-
-export function isFileSupported({ mimetype, size }: CphFile): boolean {
-  if (mimetype !== "application/pdf")
-    throw notSupported(
-      "file.mimetype",
-      mimetype,
-      new Error("Decision file should be a PDF file")
-    );
-  if (size >= FILE_MAX_SIZE.size)
-    throw notSupported(
-      "file.size",
-      size,
-      new Error(`Decision file max size is ${FILE_MAX_SIZE.readSize}`)
-    );
-  return true;
+const schemaPseudoRules = zod.object({
+  suiviRecommandationOccultation: zod.boolean(),
+  elementsAOcculter: zod.array(zod.string()),
+  interetParticulier: zod.boolean(),
+  sommaireInteretParticulier: zod.string(),
+});
+export type PseudoRules = zod.infer<typeof schemaPseudoRules>;
+export function parsePseudoRules(
+  maybePseudoRules: any
+): PseudoRules | NotSupported {
+  const result = schemaPseudoRules.safeParse(maybePseudoRules);
+  if (result.error)
+    return notSupported("pseudoRules", maybePseudoRules, result.error);
+  return result.data;
 }
 
 const schemaCphMetadatas = zod.object({});
-export type CphMetadatas = zod.infer<typeof schemaCphMetadatas>;
-export function isCphMetadatas(
-  cphMetadatas: any
-): cphMetadatas is CphMetadatas {
-  const result = schemaCphMetadatas.safeParse(cphMetadatas);
-  if (result.error)
-    throw notSupported("cphMetadatas", cphMetadatas, result.error);
-  return true;
-}
-
-const schemaPseudoCustomRules = zod.object({
-  personneMorale: zod.boolean(),
-  personnePhysicoMoraleGeoMorale: zod.boolean(),
-  adresse: zod.boolean(),
-  dateCivile: zod.boolean(),
-  plaqueImmatriculation: zod.boolean(),
-  cadastre: zod.boolean(),
-  chaineNumeroIdentifiante: zod.boolean(),
-  coordonneeElectronique: zod.boolean(),
-  professionnelMagistratGreffier: zod.boolean(),
-  motifsDebatsChambreConseil: zod.boolean(),
-  motifsSecretAffaires: zod.boolean(),
-  // conserverElement: "\#dateCivile|automobile",
-  // supprimerElement: zod.array(zod.string())
+const pdfMetadata = zod.object({
+  root: zod.object({ document: schemaCphMetadatas }),
 });
-export type PseudoCustomRules = zod.infer<typeof schemaPseudoCustomRules>;
-export function isPseudoCustomRules(
-  pseudoCustomRules: any
-): pseudoCustomRules is PseudoCustomRules {
-  const result = schemaPseudoCustomRules.safeParse(pseudoCustomRules);
+export type CphMetadatas = zod.infer<typeof schemaCphMetadatas>;
+export function parseCphMetadatas(
+  cphMetadatas: any
+): { root: { document: CphMetadatas } } | NotSupported {
+  const result = pdfMetadata.safeParse(cphMetadatas);
   if (result.error)
-    throw notSupported("pseudoCustomRules", pseudoCustomRules, result.error);
-  return true;
+    return notSupported("cphMetadatas", cphMetadatas, result.error);
+  return result.data;
 }
 
-function computeCategoriesToOmit(
-  pseudoCustomRules: PseudoCustomRules
-): `${Categories}`[] {
-  return (Object.keys(pseudoCustomRules) as (keyof PseudoCustomRules)[]).filter(
-    (k) => pseudoCustomRules[k]
-  ) as `${Categories}`[];
+function computeCategoriesToOmit(pseudoRules: PseudoRules): `${Categories}`[] {
+  return (Object.keys(pseudoRules) as (keyof PseudoRules)[]).reduce<
+    `${Categories}`[]
+  >((categories, k) => {
+    switch (k) {
+      default:
+        return categories;
+    }
+  }, []);
 }
 
 export function mapCphDecision(
   metadatas: CphMetadatas,
   content: string,
-  pseudoCustomRules: PseudoCustomRules
+  pseudoRules: PseudoRules
 ): DecisionDTO {
   return {
     appeals: [],
@@ -95,7 +65,7 @@ export function mapCphDecision(
     labelStatus: LabelStatus.TOBETREATED,
     occultation: {
       additionalTerms: "",
-      categoriesToOmit: computeCategoriesToOmit(pseudoCustomRules),
+      categoriesToOmit: computeCategoriesToOmit(pseudoRules),
       motivationOccultation: false,
     },
     originalText: content,

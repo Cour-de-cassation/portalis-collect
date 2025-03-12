@@ -11,14 +11,13 @@ import { logger } from "../../library/logger";
 import { mardownToPlainText } from "../../library/markdown";
 import { XMLParser } from "fast-xml-parser";
 import {
-  isCphMetadatas,
   CphMetadatas,
-  isFileSupported,
-  PseudoCustomRules,
-  isPseudoCustomRules,
   mapCphDecision,
+  parseCphMetadatas,
+  parsePseudoRules,
+  PseudoRules,
 } from "./models";
-import { sendToDb } from "../../library/decisionDB";
+import { sendToSder } from "../../library/decisionDB";
 
 const xmlParser = new XMLParser();
 
@@ -36,9 +35,8 @@ type CphFile = {
 
 export function saveRawCph(
   cphFile: CphFile,
-  pseudoCustomRules: PseudoCustomRules
+  { pseudoRules }: { id: string, pseudoRules: PseudoRules, }
 ): Promise<unknown> {
-  isFileSupported(cphFile);
   const name = `${uuid()}-${new Date().toISOString()}`;
 
   return Promise.all([
@@ -51,7 +49,7 @@ export function saveRawCph(
     saveFile(
       S3_BUCKET_NAME_RAW,
       `${name}.json`,
-      Buffer.from(JSON.stringify(pseudoCustomRules)),
+      Buffer.from(JSON.stringify(pseudoRules)),
       "application/json"
     ),
   ]);
@@ -67,9 +65,9 @@ async function getCphMetadatas(
       "xmlFile",
       new Error(`${fileNamePdf} has no xml attachment`)
     );
-  const customRules = xmlParser.parse(xmlFile.data);
-  isCphMetadatas(customRules);
-  return customRules;
+  const maybeCustomRules = parseCphMetadatas(xmlParser.parse(xmlFile.data));
+  if (maybeCustomRules instanceof Error) throw maybeCustomRules
+  return maybeCustomRules.root.document;
 }
 
 async function getCphContent(
@@ -80,24 +78,24 @@ async function getCphContent(
   return mardownToPlainText(markdown);
 }
 
-async function getCphPseudoCustomRules(
+async function getCphPseudoRules(
   fileNamePdf: string
-): Promise<PseudoCustomRules> {
+): Promise<PseudoRules> {
   const pseudoCustomRulesBuffer = await getFileByName(
     S3_BUCKET_NAME_RAW,
     fileNamePdf.replace(".pdf", ".json")
   );
-  const pseudoCustomRules = JSON.parse(
+  const maybePseudoRules = parsePseudoRules(JSON.parse(
     pseudoCustomRulesBuffer.toString("utf8")
-  );
-  isPseudoCustomRules(pseudoCustomRules);
-  return pseudoCustomRules;
+  ))
+  if (maybePseudoRules instanceof Error) throw maybePseudoRules
+  return maybePseudoRules;
 }
 
 async function normalizeRawCphFile(fileNamePdf: string, cphFile: Buffer) {
   const cphMetadatas = await getCphMetadatas(fileNamePdf, cphFile);
+  const cphPseudoCustomRules = await getCphPseudoRules(fileNamePdf);
   const cphContent = await getCphContent(fileNamePdf, cphFile);
-  const cphPseudoCustomRules = await getCphPseudoCustomRules(fileNamePdf);
 
   const cphDecision = mapCphDecision(
     cphMetadatas,
@@ -105,7 +103,7 @@ async function normalizeRawCphFile(fileNamePdf: string, cphFile: Buffer) {
     cphPseudoCustomRules
   );
 
-  await sendToDb(cphDecision);
+  await sendToSder(cphDecision);
 
   return Promise.all([
     changeBucket(
@@ -129,6 +127,10 @@ export async function normalizeRawCphFiles(): Promise<Error[]> {
 
   const normalizeResults = decisionNames.map(async (fileNamePdf) => {
     try {
+      logger.info({
+        operationName: "normalizeRawCphFiles",
+        msg: `normalize ${fileNamePdf}`,
+      });
       const file = await getFileByName(S3_BUCKET_NAME_RAW, fileNamePdf);
       await normalizeRawCphFile(fileNamePdf, file);
       return null;

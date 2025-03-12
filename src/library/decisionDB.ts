@@ -9,6 +9,6 @@ if (process.env.DBSDER_API_KEY == null)
 
 const { DBSDER_API_URL, DBSDER_API_KEY } = process.env;
 
-export function sendToDb(decision: DecisionDTO) {
+export function sendToSder(decision: DecisionDTO) {
   return axios.post(DBSDER_API_URL, decision);
 }
