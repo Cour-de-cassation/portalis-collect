@@ -7,19 +7,22 @@ import {
   Sources,
 } from "dbsder-api-types";
 
-const schemaPseudoRules = zod.object({
-  suiviRecommandationOccultation: zod.boolean(),
-  elementsAOcculter: zod.array(zod.string()),
+const schemaPublicationRules = zod.object({
+  identifiantDecision: zod.string().trim().min(1),
+  occultationsComplementaires: zod.object({
+    suiviRecommandationOccultation: zod.boolean(),
+    elementsAOcculter: zod.array(zod.string()),
+  }),
   interetParticulier: zod.boolean(),
   sommaireInteretParticulier: zod.string(),
 });
-export type PseudoRules = zod.infer<typeof schemaPseudoRules>;
-export function parsePseudoRules(
-  maybePseudoRules: any
-): PseudoRules | NotSupported {
-  const result = schemaPseudoRules.safeParse(maybePseudoRules);
+export type PublicationRules = zod.infer<typeof schemaPublicationRules>;
+export function parsePublicationRules(
+  maybePublicationRules: any
+): PublicationRules | NotSupported {
+  const result = schemaPublicationRules.safeParse(maybePublicationRules);
   if (result.error)
-    return notSupported("pseudoRules", maybePseudoRules, result.error);
+    return notSupported("publicationRules", maybePublicationRules, result.error);
   return result.data;
 }
 
@@ -37,8 +40,8 @@ export function parseCphMetadatas(
   return result.data;
 }
 
-function computeCategoriesToOmit(pseudoRules: PseudoRules): `${Categories}`[] {
-  return (Object.keys(pseudoRules) as (keyof PseudoRules)[]).reduce<
+function computeCategoriesToOmit(pseudoRules: PublicationRules["occultationsComplementaires"]): `${Categories}`[] {
+  return (Object.keys(pseudoRules) as (keyof PublicationRules["occultationsComplementaires"])[]).reduce<
     `${Categories}`[]
   >((categories, k) => {
     switch (k) {
@@ -51,7 +54,7 @@ function computeCategoriesToOmit(pseudoRules: PseudoRules): `${Categories}`[] {
 export function mapCphDecision(
   metadatas: CphMetadatas,
   content: string,
-  pseudoRules: PseudoRules
+  publicationRules: PublicationRules
 ): DecisionDTO {
   return {
     appeals: [],
@@ -65,7 +68,7 @@ export function mapCphDecision(
     labelStatus: LabelStatus.TOBETREATED,
     occultation: {
       additionalTerms: "",
-      categoriesToOmit: computeCategoriesToOmit(pseudoRules),
+      categoriesToOmit: computeCategoriesToOmit(publicationRules.occultationsComplementaires),
       motivationOccultation: false,
     },
     originalText: content,

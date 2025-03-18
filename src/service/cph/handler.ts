@@ -14,8 +14,8 @@ import {
   CphMetadatas,
   mapCphDecision,
   parseCphMetadatas,
-  parsePseudoRules,
-  PseudoRules,
+  parsePublicationRules,
+  PublicationRules,
 } from "./models";
 import { sendToSder } from "../../library/decisionDB";
 
@@ -35,7 +35,7 @@ type CphFile = {
 
 export function saveRawCph(
   cphFile: CphFile,
-  { pseudoRules }: { id: string, pseudoRules: PseudoRules, }
+  publicationRules: PublicationRules
 ): Promise<unknown> {
   const name = `${uuid()}-${new Date().toISOString()}`;
 
@@ -49,7 +49,7 @@ export function saveRawCph(
     saveFile(
       S3_BUCKET_NAME_RAW,
       `${name}.json`,
-      Buffer.from(JSON.stringify(pseudoRules)),
+      Buffer.from(JSON.stringify(publicationRules)),
       "application/json"
     ),
   ]);
@@ -78,14 +78,14 @@ async function getCphContent(
   return mardownToPlainText(markdown);
 }
 
-async function getCphPseudoRules(
+async function getCphPublicationRules(
   fileNamePdf: string
-): Promise<PseudoRules> {
+): Promise<PublicationRules> {
   const pseudoCustomRulesBuffer = await getFileByName(
     S3_BUCKET_NAME_RAW,
     fileNamePdf.replace(".pdf", ".json")
   );
-  const maybePseudoRules = parsePseudoRules(JSON.parse(
+  const maybePseudoRules = parsePublicationRules(JSON.parse(
     pseudoCustomRulesBuffer.toString("utf8")
   ))
   if (maybePseudoRules instanceof Error) throw maybePseudoRules
@@ -94,7 +94,7 @@ async function getCphPseudoRules(
 
 async function normalizeRawCphFile(fileNamePdf: string, cphFile: Buffer) {
   const cphMetadatas = await getCphMetadatas(fileNamePdf, cphFile);
-  const cphPseudoCustomRules = await getCphPseudoRules(fileNamePdf);
+  const cphPseudoCustomRules = await getCphPublicationRules(fileNamePdf);
   const cphContent = await getCphContent(fileNamePdf, cphFile);
 
   const cphDecision = mapCphDecision(
