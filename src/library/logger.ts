@@ -11,7 +11,7 @@ const pinoPrettyConf = {
 };
 
 const loggerOptions: LoggerOptions = {
-  base: { appName: "juriCPH" },
+  base: { appName: "portalis-collect" },
   formatters: {
     level: (label) => {
       return {
@@ -40,4 +40,4 @@ const loggerOptions: LoggerOptions = {
 
 export const logger = pino(loggerOptions);
 
-export const loggerHttp = pinoHttp({ ...loggerOptions, autoLogging: false }) // attach logger instance at req (req.log will log message and req info)
+export const loggerHttp = pinoHttp({ ...loggerOptions, autoLogging: false }); // attach logger instance at req (req.log will log message and req info)

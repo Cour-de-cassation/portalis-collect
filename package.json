@@ -1,13 +1,14 @@
 {
-  "name": "juricph",
+  "name": "portalis-collect",
   "version": "0.0.1",
-  "description": "package to collect CPH",
-  "main": "build/server.js",
+  "description": "package to collect portalis",
+  "main": "dist/server.js",
   "author": "",
   "license": "ISC",
   "scripts": {
     "start:api:watch": "nodemon --watch 'src/**' --ext 'ts,json' --exec 'npx ts-node src/server.ts'",
-    "start:batch:watch": "npx ts-node src/batch.ts"
+    "start:batch:watch": "npx ts-node src/batch.ts",
+    "build": "tsc --build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.651.0",

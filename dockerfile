@@ -3,6 +3,8 @@ FROM node:20-alpine
 USER node
 WORKDIR /home/node
 
-COPY . .
+COPY --chown=node:node . .
+
+RUN npm i
 
 CMD ["npm", "run", "start:api:watch"]
