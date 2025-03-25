@@ -51,6 +51,10 @@ function computeCategoriesToOmit(pseudoRules: PublicationRules["occultationsComp
   }, []);
 }
 
+function computeAdditionalTerms(pseudoRules: PublicationRules["occultationsComplementaires"]): string {
+  return pseudoRules.elementsAOcculter.map(_ => `+${_}`).join("|")
+}
+
 export function mapCphDecision(
   metadatas: CphMetadatas,
   content: string,
@@ -67,7 +71,7 @@ export function mapCphDecision(
     jurisdictionName: "",
     labelStatus: LabelStatus.TOBETREATED,
     occultation: {
-      additionalTerms: "",
+      additionalTerms: computeAdditionalTerms(publicationRules.occultationsComplementaires),
       categoriesToOmit: computeCategoriesToOmit(publicationRules.occultationsComplementaires),
       motivationOccultation: false,
     },
