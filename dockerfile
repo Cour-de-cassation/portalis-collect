@@ -5,6 +5,7 @@ WORKDIR /home/node
 
 COPY --chown=node:node . .
 
-RUN npm i
+RUN npm ci
+RUN npm run build
 
-CMD ["npm", "run", "start:api:watch"]
+CMD ["node", "dist/server.js"]
