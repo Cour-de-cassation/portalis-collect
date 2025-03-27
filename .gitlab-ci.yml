@@ -24,9 +24,9 @@ test:
         --target test
         -t portalis-collect-test .
     - echo 'ok'
-  only:
-    - master
-    - re7
-    - dev
+  # only:
+  #   - master
+  #   - re7
+  #   - dev
   tags:
     - docker
