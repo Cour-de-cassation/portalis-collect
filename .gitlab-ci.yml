@@ -1,0 +1,32 @@
+image: docker:$DOCKER_BUILD_VERSION
+services:
+  - docker:$DOCKER_BUILD_VERSION-dind
+
+variables:
+  docker_image_hash: "$CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
+  docker_image_latest: "$CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME-latest"
+
+stages:
+  - test
+
+test:
+  stage: test
+  services:
+  - docker:$DOCKER_BUILD_VERSION
+  variables:
+    HTTP_PROXY: $HTTP_PROXY_DEV
+    HTTPS_PROXY: $HTTPS_PROXY_DEV
+  script:
+    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker build 
+        --build-arg http_proxy=$HTTP_PROXY
+        --build-arg https_proxy=$HTTPS_PROXY
+        --target test
+        -t portalis-collect-test .
+    - echo 'ok'
+  only:
+    - master
+    - re7
+    - dev
+  tags:
+    - docker
