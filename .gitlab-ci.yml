@@ -22,9 +22,5 @@ test:
         --build-arg http_proxy=$HTTP_PROXY
         --build-arg https_proxy=$HTTPS_PROXY
         -t portalis-collect .
-  # only:
-  #   - master
-  #   - re7
-  #   - dev
   tags:
     - docker
