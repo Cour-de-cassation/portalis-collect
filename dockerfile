@@ -6,15 +6,16 @@ FROM node:${NODE_VERSION}-alpine
 USER node
 WORKDIR /home/node
 
+COPY --chown=node:node . .; \
+COPY --chown=node:node ./dist ./dist; \
+COPY --chown=node:node ./package.json ./package.json; \
+
 RUN if [ "$INCLUDE_DEV_DEPENDENCIES" = "true" ]; then \
       echo "Installing all dependencies..."; \
-      COPY --chown=node:node . .; \
       npm ci; \
       npm run build; \
     else \
       echo "Installing only production dependencies..."; \
-      COPY --chown=node:node ./dist ./dist; \
-      COPY --chown=node:node ./package.json ./package.json; \
       npm ci --omit=dev; \
     fi
 
