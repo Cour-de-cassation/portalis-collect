@@ -1,9 +1,24 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
-USER node
 WORKDIR /home/node
 
-COPY --chown=node:node ./src ./src
-COPY --chown=node:node ./package.json ./package.json
+COPY package*.json ./
+
+RUN npm ci
+
+COPY --chown=node:node . .
+
+RUN npm run build
+
+FROM node:20-alpine
+
+WORKDIR /home/node
+
+COPY --from=builder --chown=node:node /home/node/dist ./dist
+COPY --from=builder --chown=node:node /home/node/package*.json ./
+
+RUN npm ci --omit=dev
+
+USER node
 
 CMD ["node", "dist/server.js"]
