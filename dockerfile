@@ -1,22 +1,11 @@
-ARG NODE_VERSION=23
-ARG INCLUDE_DEV_DEPENDENCIES=false
-
-FROM node:${NODE_VERSION}-alpine
+FROM node:20-alpine
 
 USER node
 WORKDIR /home/node
 
-COPY --chown=node:node . .; \
-COPY --chown=node:node ./dist ./dist; \
-COPY --chown=node:node ./package.json ./package.json; \
+COPY --chown=node:node . .
 
-RUN if [ "$INCLUDE_DEV_DEPENDENCIES" = "true" ]; then \
-      echo "Installing all dependencies..."; \
-      npm ci; \
-      npm run build; \
-    else \
-      echo "Installing only production dependencies..."; \
-      npm ci --omit=dev; \
-    fi
+RUN npm ci
+RUN npm run build
 
 CMD ["node", "dist/server.js"]
