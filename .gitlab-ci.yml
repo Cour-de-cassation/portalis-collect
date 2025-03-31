@@ -7,10 +7,10 @@ variables:
   docker_image_latest: "$CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME-latest"
 
 stages:
-  - test
+  - dev
 
-test:
-  stage: test
+dev:
+  stage: dev
   services:
   - docker:$DOCKER_BUILD_VERSION_NEW
   variables:
