@@ -8,9 +8,26 @@ variables:
 
 stages:
   - dev
+  - prod
 
 dev:
   stage: dev
+  services:
+  - docker:$DOCKER_BUILD_VERSION_NEW
+  variables:
+    HTTP_PROXY: $HTTP_PROXY_DEV
+    HTTPS_PROXY: $HTTPS_PROXY_DEV
+  script:
+    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker build 
+        --build-arg http_proxy=$HTTP_PROXY
+        --build-arg https_proxy=$HTTPS_PROXY
+        -t portalis-collect .
+  tags:
+    - docker
+
+prod:
+  stage: prod
   services:
   - docker:$DOCKER_BUILD_VERSION_NEW
   variables:
