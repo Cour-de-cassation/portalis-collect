@@ -13,8 +13,11 @@ RUN npm run build
 
 RUN if [ "$INCLUDE_DEV_DEPENDENCIES" = "true" ]; then \
       echo "Installing all dependencies..."; \
+      COPY --chown=node:node . .; \
+      npm ci; \
+      npm run build; \
     else \
       echo "Installing only production dependencies..."; \
     fi
-
+    
 CMD ["node", "dist/server.js"]
