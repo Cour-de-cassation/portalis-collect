@@ -1,17 +1,18 @@
 FROM node:23-alpine
 
+ARG INCLUDE_DEV_DEPENDENCIES=false
+
 USER node
 WORKDIR /home/node
 
-ARG INCLUDE_DEV_DEPENDENCIES=false
-
-COPY --chown=node:node ./dist ./dist
-COPY --chown=node:node ./package.json ./package.json
+COPY --chown=node:node . .
 
 RUN if [ "$INCLUDE_DEV_DEPENDENCIES" = true ]; then \
       npm ci; \
     else \
       npm ci --omit=dev; \
     fi
+
+RUN npm run build
 
 CMD ["node", "dist/server.js"]
