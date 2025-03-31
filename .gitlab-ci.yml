@@ -22,6 +22,7 @@ dev:
     - docker build 
         --build-arg http_proxy=$HTTP_PROXY
         --build-arg https_proxy=$HTTPS_PROXY
+        -f dockerfile_depencies
         -t portalis-collect .
   tags:
     - docker
