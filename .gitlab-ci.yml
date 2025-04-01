@@ -48,7 +48,7 @@ dev:
     - echo "Logging in to Docker registry..."
     - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - docker pull $docker_image_dev
-    - docker tag $docker_image_dev portalis-collect-dev
+    - docker tag $docker_image_dev $CI_PROJECT_NAME-dev
   tags:
     - docker
 
@@ -58,7 +58,7 @@ preprod:
     - echo "Logging in to Docker registry..."
     - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - docker pull $docker_image
-    - docker tag $docker_image portalis-collect-preprod
+    - docker tag $docker_image $CI_PROJECT_NAME-preprod
   tags:
     - docker
 
@@ -68,6 +68,6 @@ prod:
     - echo "Logging in to Docker registry..."
     - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - docker pull $docker_image
-    - docker tag $docker_image portalis-collect-prod
+    - docker tag $docker_image $CI_PROJECT_NAME-prod
   tags:
     - docker
