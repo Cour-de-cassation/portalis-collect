@@ -8,6 +8,7 @@ variables:
 
 stages:
   - dev
+  - preprod
   - prod
 
 dev:
@@ -23,6 +24,22 @@ dev:
         --build-arg http_proxy=$HTTP_PROXY
         --build-arg https_proxy=$HTTPS_PROXY
         -f dockerfile_depencies
+        -t portalis-collect .
+  tags:
+    - docker
+
+preprod:
+  stage: preprod
+  services:
+  - docker:$DOCKER_BUILD_VERSION_NEW
+  variables:
+    HTTP_PROXY: $HTTP_PROXY_DEV
+    HTTPS_PROXY: $HTTPS_PROXY_DEV
+  script:
+    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker build 
+        --build-arg http_proxy=$HTTP_PROXY
+        --build-arg https_proxy=$HTTPS_PROXY
         -t portalis-collect .
   tags:
     - docker
