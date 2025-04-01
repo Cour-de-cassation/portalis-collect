@@ -41,6 +41,8 @@ build:
 dev:
   stage: dev
   script:
+    - echo "Logging in to Docker registry..."
+    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - docker pull $docker_image_dev
     - docker tag $docker_image_dev portalis-collect-dev
   tags:
@@ -49,6 +51,8 @@ dev:
 preprod:
   stage: preprod
   script:
+    - echo "Logging in to Docker registry..."
+    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - docker pull $docker_image
     - docker tag $docker_image portalis-collect-preprod
   tags:
@@ -57,6 +61,8 @@ preprod:
 prod:
   stage: prod
   script:
+    - echo "Logging in to Docker registry..."
+    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - docker pull $docker_image
     - docker tag $docker_image portalis-collect-prod
   tags:
