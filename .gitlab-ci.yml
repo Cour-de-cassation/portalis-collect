@@ -3,59 +3,61 @@ services:
   - docker:$DOCKER_BUILD_VERSION_NEW-dind
 
 variables:
-  docker_image_hash: "$CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
-  docker_image_latest: "$CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME-latest"
+  docker_image_dev: "$CI_REGISTRY/$CI_PROJECT_PATH:dev-$CI_COMMIT_SHORT_SHA"
+  docker_image: "$CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA"
+  HTTP_PROXY: $HTTP_PROXY_DEV
+  HTTPS_PROXY: $HTTPS_PROXY_DEV
 
 stages:
+  - build
   - dev
   - preprod
   - prod
 
-dev:
-  stage: dev
-  services:
-  - docker:$DOCKER_BUILD_VERSION_NEW
-  variables:
-    HTTP_PROXY: $HTTP_PROXY_DEV
-    HTTPS_PROXY: $HTTPS_PROXY_DEV
+build_dev:
+  stage: build
   script:
     - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - docker build 
+    - docker build
         --build-arg http_proxy=$HTTP_PROXY
         --build-arg https_proxy=$HTTPS_PROXY
-        -f dockerfile_depencies
-        -t portalis-collect .
+        -f Dockerfile.dev
+        -t $docker_image_dev .
+  tags:
+    - docker
+
+build:
+  stage: build
+  script:
+    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker build
+        --build-arg http_proxy=$HTTP_PROXY
+        --build-arg https_proxy=$HTTPS_PROXY
+        -f Dockerfile
+        -t $docker_image .
+  tags:
+    - docker
+
+dev:
+  stage: dev
+  script:
+    - docker pull $docker_image_dev
+    - docker tag $docker_image_dev portalis-collect-dev
   tags:
     - docker
 
 preprod:
   stage: preprod
-  services:
-  - docker:$DOCKER_BUILD_VERSION_NEW
-  variables:
-    HTTP_PROXY: $HTTP_PROXY_DEV
-    HTTPS_PROXY: $HTTPS_PROXY_DEV
   script:
-    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - docker build 
-        --build-arg http_proxy=$HTTP_PROXY
-        --build-arg https_proxy=$HTTPS_PROXY
-        -t portalis-collect .
+    - docker pull $docker_image
+    - docker tag $docker_image portalis-collect-preprod
   tags:
     - docker
 
 prod:
   stage: prod
-  services:
-  - docker:$DOCKER_BUILD_VERSION_NEW
-  variables:
-    HTTP_PROXY: $HTTP_PROXY_DEV
-    HTTPS_PROXY: $HTTPS_PROXY_DEV
   script:
-    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - docker build 
-        --build-arg http_proxy=$HTTP_PROXY
-        --build-arg https_proxy=$HTTPS_PROXY
-        -t portalis-collect .
+    - docker pull $docker_image
+    - docker tag $docker_image portalis-collect-prod
   tags:
     - docker
