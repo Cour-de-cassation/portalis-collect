@@ -21,7 +21,7 @@ build_dev:
     - docker build
         --build-arg http_proxy=$HTTP_PROXY
         --build-arg https_proxy=$HTTPS_PROXY
-        -f Dockerfile.dev
+        -f dockerfile.dev
         -t $docker_image_dev .
   tags:
     - docker
