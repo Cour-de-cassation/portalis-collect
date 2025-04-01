@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:23-alpine AS builder
 
 WORKDIR /home/node
 
@@ -10,7 +10,7 @@ COPY --chown=node:node . .
 
 RUN npm run build
 
-FROM node:20-alpine
+FROM node:23-alpine
 
 WORKDIR /home/node
 
