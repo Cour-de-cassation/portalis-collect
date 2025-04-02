@@ -3,10 +3,12 @@ services:
   - docker:$DOCKER_BUILD_VERSION_NEW-dind
 
 variables:
-  docker_image_dev: "$CI_REGISTRY/$CI_PROJECT_PATH:dev-latest"
+  docker_image_dev: "$CI_REGISTRY/$CI_PROJECT_PATH:latest-dev"
   docker_image: "$CI_REGISTRY/$CI_PROJECT_PATH:latest"
+  docker_image_version: "$CI_REGISTRY/$CI_PROJECT_PATH:$PROJECT_VERSION"
   HTTP_PROXY: $HTTP_PROXY_DEV
   HTTPS_PROXY: $HTTPS_PROXY_DEV
+  PROJECT_VERSION: "1.0.0"
 
 stages:
   - build
@@ -39,6 +41,8 @@ build:
         -f Dockerfile
         -t $docker_image .
     - docker push $docker_image
+    - docker tag $docker_image $docker_image_version
+    - docker push $docker_image_version
   tags:
     - docker
 
