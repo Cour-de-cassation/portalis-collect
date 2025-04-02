@@ -3,6 +3,8 @@ services:
   - docker:$DOCKER_BUILD_VERSION_NEW-dind
 
 variables:
+  HTTP_PROXY: $HTTP_PROXY_DEV
+  HTTPS_PROXY: $HTTPS_PROXY_DEV
   PROJECT_VERSION: "1.0.0"
 
 stages:
