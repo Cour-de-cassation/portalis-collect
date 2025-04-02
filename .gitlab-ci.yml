@@ -44,6 +44,7 @@ build:
 
 dev:
   stage: dev
+  image: alpine/ansible:latest
   script:
     - echo "Logging in to Docker registry..."
     - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
@@ -54,6 +55,7 @@ dev:
 
 preprod:
   stage: preprod
+  image: alpine/ansible:latest
   script:
     - echo "Logging in to Docker registry..."
     - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
@@ -64,6 +66,7 @@ preprod:
 
 prod:
   stage: prod
+  image: alpine/ansible:latest
   script:
     - echo "Logging in to Docker registry..."
     - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
