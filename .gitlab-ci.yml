@@ -3,11 +3,6 @@ services:
   - docker:$DOCKER_BUILD_VERSION_NEW-dind
 
 variables:
-  docker_image_dev: "$CI_REGISTRY/$CI_PROJECT_PATH:latest-dev"
-  docker_image: "$CI_REGISTRY/$CI_PROJECT_PATH:latest"
-  docker_image_version: "$CI_REGISTRY/$CI_PROJECT_PATH:$PROJECT_VERSION"
-  HTTP_PROXY: $HTTP_PROXY_DEV
-  HTTPS_PROXY: $HTTPS_PROXY_DEV
   PROJECT_VERSION: "1.0.0"
 
 stages:
@@ -19,6 +14,15 @@ stages:
 before_script:
   - echo "Logging in to Docker registry..."
   - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  - |
+    if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
+      export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
+    else
+      export BRANCH_SUFFIX=""
+    fi
+  - export docker_image_dev="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest-dev"
+  - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
+  - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$PROJECT_VERSION"
 
 build_dev:
   stage: build
