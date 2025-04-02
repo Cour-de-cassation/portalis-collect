@@ -55,7 +55,7 @@ dev:
   variables:
     image_url: $docker_image_dev
   script:
-    - docker pull $docker_image_dev
+    - docker pull $image_url
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
@@ -72,7 +72,7 @@ preprod:
   variables:
     image_url: $docker_image
   script:
-    - docker pull $docker_image
+    - docker pull $image_url
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
@@ -89,7 +89,7 @@ prod:
   variables:
     image_url: $docker_image
   script:
-    - docker pull $docker_image
+    - docker pull $image_url
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
