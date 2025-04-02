@@ -52,7 +52,7 @@ build:
 
 dev:
   stage: dev
-  variable:
+  variables:
     image_url: $docker_image_dev
   script:
     - docker pull $docker_image_dev
@@ -69,7 +69,7 @@ dev:
 
 preprod:
   stage: preprod
-  variable:
+  variables:
     image_url: $docker_image
   script:
     - docker pull $docker_image
@@ -86,7 +86,7 @@ preprod:
 
 prod:
   stage: prod
-  variable:
+  variables:
     image_url: $docker_image
   script:
     - docker pull $docker_image
