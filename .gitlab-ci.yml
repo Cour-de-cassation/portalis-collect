@@ -55,6 +55,7 @@ dev:
   variables:
     IMAGE_URL: $docker_image_dev
   script:
+    - echo Test
     - docker pull $docker_image_dev
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
     - mkdir /root/.ssh
