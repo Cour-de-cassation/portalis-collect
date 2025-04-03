@@ -86,7 +86,7 @@ preprod:
   tags:
     - docker
   needs:
-    - build
+    - dev
 
 prod:
   stage: prod
@@ -103,5 +103,5 @@ prod:
   tags:
     - docker
   needs:
-    - build
+    - preprod
 
