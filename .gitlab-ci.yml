@@ -53,7 +53,7 @@ build:
 dev:
   stage: dev
   variables:
-    IMAGE_URL: "$docker_image_dev"
+    IMAGE_URL: "Eureka"
   script:
     - echo "IMAGE_URL $IMAGE_URL"
     - echo "docker_image_dev $docker_image_dev"
