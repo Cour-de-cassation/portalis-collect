@@ -52,12 +52,7 @@ build:
 
 dev:
   stage: dev
-  variables:
-    IMAGE_URL: "$DOCKER_IMAGE_DEV"
-    IMAGE_URL_2: "Eureka"
   script:
-    - echo "IMAGE_URL $IMAGE_URL"
-    - echo "IMAGE_URL $IMAGE_URL_2"
     - echo "docker_image_dev $docker_image_dev"
     - docker pull $docker_image_dev
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
@@ -73,8 +68,6 @@ dev:
 
 preprod:
   stage: preprod
-  variables:
-    IMAGE_URL: $docker_image
   script:
     - docker pull $docker_image
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
@@ -90,8 +83,6 @@ preprod:
 
 prod:
   stage: prod
-  variables:
-    IMAGE_URL: $docker_image
   script:
     - docker pull $docker_image
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
