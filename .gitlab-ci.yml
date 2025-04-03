@@ -53,9 +53,11 @@ build:
 dev:
   stage: dev
   variables:
-    IMAGE_URL: "Eureka"
+    IMAGE_URL: "$docker_image_dev"
+    IMAGE_URL_2: "Eureka"
   script:
     - echo "IMAGE_URL $IMAGE_URL"
+    - echo "IMAGE_URL $IMAGE_URL_2"
     - echo "docker_image_dev $docker_image_dev"
     - docker pull $docker_image_dev
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
