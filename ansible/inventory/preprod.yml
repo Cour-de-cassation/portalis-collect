@@ -1,0 +1,33 @@
+---
+preprod:
+  children:
+    externalproxy:
+      hosts:
+        externalproxyhost:
+          ansible_host: 10.227.10.201
+
+    proxy:
+      hosts:
+        proxy_host:
+          ansible_host: 10.227.10.200
+
+    k3s_master:
+      hosts:
+        k3s_master_host:
+          ansible_host: 10.227.10.202
+
+    k3s_slaves:
+      hosts:
+        slave_one:
+          ansible_host: 10.227.10.203
+    
+    db:
+      hosts:
+        dbhost:
+          ansible_host: 10.227.10.204
+    
+    gitlab:
+      hosts:
+        gitlabhost:
+          ansible_user: "tomwilliams"
+          ansible_host: 10.227.10.197

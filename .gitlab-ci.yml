@@ -53,8 +53,6 @@ build:
 dev:
   stage: dev
   script:
-    - echo "docker_image_dev $docker_image_dev"
-    - docker pull $docker_image_dev
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
@@ -69,7 +67,6 @@ dev:
 preprod:
   stage: preprod
   script:
-    - docker pull $docker_image
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
@@ -84,7 +81,6 @@ preprod:
 prod:
   stage: prod
   script:
-    - docker pull $docker_image
     - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
@@ -93,6 +89,7 @@ prod:
     - chmod 600 /root/.ssh/known_hosts
   tags:
     - docker
+  when: manual
   needs:
     - preprod
 
