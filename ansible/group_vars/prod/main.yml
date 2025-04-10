@@ -12,5 +12,5 @@ commissioning_date: "2024-12-31"
 av_node_name: "jud7vcorc001"
 av_host_path: "/data/av"
 node_env: development
-authentification_key: "{{ vault_authentification_key }}"
+authentication_key: "{{ vault_authentication_key }}"
 hash_key: "{{ vault_hash_key }}"
