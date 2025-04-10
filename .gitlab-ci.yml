@@ -63,7 +63,7 @@ build:
 
 dev:
   stage: dev
-  image: alpine/ansible:2.16.1
+  #image: alpine/ansible:2.16.1
   script:
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
