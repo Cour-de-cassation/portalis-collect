@@ -15,8 +15,8 @@
           app: "{{ app_id }}"
         ports:
           - name: api
-            port: "{{ api_port }}"
-            targetPort: "{{ api_port }}"
+            port: 3015
+            targetPort: 3015
         type: ClusterIP
 
 ...
