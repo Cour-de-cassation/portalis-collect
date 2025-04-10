@@ -11,23 +11,21 @@ stages:
   - preprod
   - prod
 
-before_script:
-  - echo "Logging in to Docker registry..."
-  - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  - |
-    if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
-      export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
-    else
-      export BRANCH_SUFFIX=""
-    fi
-  - export docker_image_dev="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest-dev"
-  - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
-  #- export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$PROJECT_VERSION"
-  - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
-
 build_dev:
   stage: build
   script:
+    - echo "Logging in to Docker registry..."
+    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - |
+      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
+        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
+      else
+        export BRANCH_SUFFIX=""
+      fi
+    - export docker_image_dev="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest-dev"
+    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
+    #- export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$PROJECT_VERSION"
+    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
     - docker build
         --build-arg http_proxy=$HTTP_PROXY
         --build-arg https_proxy=$HTTPS_PROXY
@@ -40,6 +38,18 @@ build_dev:
 build:
   stage: build
   script:
+    - echo "Logging in to Docker registry..."
+    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - |
+      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
+        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
+      else
+        export BRANCH_SUFFIX=""
+      fi
+    - export docker_image_dev="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest-dev"
+    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
+    #- export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$PROJECT_VERSION"
+    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
     - docker build
         --build-arg http_proxy=$HTTP_PROXY
         --build-arg https_proxy=$HTTPS_PROXY
