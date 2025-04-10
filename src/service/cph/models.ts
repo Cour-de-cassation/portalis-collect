@@ -22,7 +22,11 @@ export function parsePublicationRules(
 ): PublicationRules | NotSupported {
   const result = schemaPublicationRules.safeParse(maybePublicationRules);
   if (result.error)
-    return notSupported("publicationRules", maybePublicationRules, result.error);
+    return notSupported(
+      "publicationRules",
+      maybePublicationRules,
+      result.error
+    );
   return result.data;
 }
 
@@ -40,10 +44,14 @@ export function parseCphMetadatas(
   return result.data;
 }
 
-function computeCategoriesToOmit(pseudoRules: PublicationRules["occultationsComplementaires"]): `${Categories}`[] {
-  return (Object.keys(pseudoRules) as (keyof PublicationRules["occultationsComplementaires"])[]).reduce<
-    `${Categories}`[]
-  >((categories, k) => {
+function computeCategoriesToOmit(
+  pseudoRules: PublicationRules["occultationsComplementaires"]
+): `${Categories}`[] {
+  return (
+    Object.keys(
+      pseudoRules
+    ) as (keyof PublicationRules["occultationsComplementaires"])[]
+  ).reduce<`${Categories}`[]>((categories, k) => {
     switch (k) {
       default:
         return categories;
@@ -51,8 +59,10 @@ function computeCategoriesToOmit(pseudoRules: PublicationRules["occultationsComp
   }, []);
 }
 
-function computeAdditionalTerms(pseudoRules: PublicationRules["occultationsComplementaires"]): string {
-  return pseudoRules.elementsAOcculter.map(_ => `+${_}`).join("|")
+function computeAdditionalTerms(
+  pseudoRules: PublicationRules["occultationsComplementaires"]
+): string {
+  return pseudoRules.elementsAOcculter.map((_) => `+${_}`).join("|");
 }
 
 export function mapCphDecision(
@@ -71,8 +81,12 @@ export function mapCphDecision(
     jurisdictionName: "",
     labelStatus: LabelStatus.TOBETREATED,
     occultation: {
-      additionalTerms: computeAdditionalTerms(publicationRules.occultationsComplementaires),
-      categoriesToOmit: computeCategoriesToOmit(publicationRules.occultationsComplementaires),
+      additionalTerms: computeAdditionalTerms(
+        publicationRules.occultationsComplementaires
+      ),
+      categoriesToOmit: computeCategoriesToOmit(
+        publicationRules.occultationsComplementaires
+      ),
       motivationOccultation: false,
     },
     originalText: content,
@@ -80,5 +94,6 @@ export function mapCphDecision(
     sourceId: 0,
     sourceName: Sources.TCOM, // Warning => CPH
     blocOccultation: 1,
+    selection: false,
   };
 }

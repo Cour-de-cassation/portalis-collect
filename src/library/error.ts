@@ -28,6 +28,16 @@ export function missingValue(variableName: string, error: Error): MissingValue {
   });
 }
 
+export type UnauthorizedError = Error & {
+  type: "unauthorizedError";
+};
+export function unauthorizedError(error: Error): UnauthorizedError {
+  if (!error.message) error.message = `Resource needs to be logged to access. Currently unauthorized.`
+  return Object.assign(error, {
+    type: "unauthorizedError" as const,
+  });
+}
+
 export type UnexpectedError = Error & {
   type: "unexpectedError";
 };
