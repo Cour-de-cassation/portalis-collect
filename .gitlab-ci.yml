@@ -22,9 +22,7 @@ build:
       else
         export BRANCH_SUFFIX=""
       fi
-    #- export docker_image_dev="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest-dev"
     - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
-    #- export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$PROJECT_VERSION"
     - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
     - docker build
         --build-arg http_proxy=$HTTP_PROXY
@@ -46,6 +44,14 @@ dev:
     - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
+    - |
+      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
+        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
+      else
+        export BRANCH_SUFFIX=""
+      fi
+    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
+    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
     - echo "La valeur de docker_image est $docker_image"
     - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/dev.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   tags:
@@ -62,6 +68,14 @@ preprod:
     - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
+    - |
+      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
+        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
+      else
+        export BRANCH_SUFFIX=""
+      fi
+    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
+    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
     - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/preprod.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   tags:
     - docker
@@ -78,6 +92,14 @@ prod:
     - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
+    - |
+      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
+        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
+      else
+        export BRANCH_SUFFIX=""
+      fi
+    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
+    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
     - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/prod.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   tags:
     - docker
