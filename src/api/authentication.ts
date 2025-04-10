@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
+import OAuthServer from "@node-oauth/express-oauth-server";
+
 import { unauthorizedError } from "../library/error";
-import { validateBasic } from "../service/authentication";
+import { validateBasic, validateOAuth } from "../service/authentication";
 
 export const basicAuthHandler = (
   req: Request,
@@ -26,6 +28,6 @@ export const basicAuthHandler = (
   );
 };
 
-export const oAuthHandler = (req: Request, _: Response, next: NextFunction) => {
-  next();
-};
+export const oAuthHandler = new OAuthServer({
+  model: validateOAuth,
+}).authorize();
