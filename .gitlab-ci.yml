@@ -53,14 +53,14 @@ build:
 
 dev:
   stage: dev
+  image: alpine/ansible:2.16.1
   script:
-    - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
     - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
-    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/$inventaire.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
+    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/dev.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   tags:
     - docker
   needs:
@@ -69,13 +69,12 @@ dev:
 preprod:
   stage: preprod
   script:
-    - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
     - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
-    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/$inventaire.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
+    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/preprod.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   tags:
     - docker
   when: manual
@@ -85,13 +84,12 @@ preprod:
 prod:
   stage: prod
   script:
-    - inventaire=$(eval "echo \$$CI_COMMIT_BRANCH")
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
     - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
-    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/$inventaire.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
+    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/prod.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   tags:
     - docker
   when: manual
