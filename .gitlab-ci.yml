@@ -1,0 +1,109 @@
+image: docker:$DOCKER_BUILD_VERSION_NEW
+services:
+  - docker:$DOCKER_BUILD_VERSION_NEW-dind
+
+variables:
+  PROJECT_VERSION: "1.0.0"
+
+stages:
+  - build
+  - dev
+  - preprod
+  - prod
+
+build:
+  stage: build
+  script:
+    - echo "Logging in to Docker registry..."
+    - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - |
+      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
+        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
+      else
+        export BRANCH_SUFFIX=""
+      fi
+    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
+    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
+    - docker build
+        --build-arg http_proxy=$HTTP_PROXY
+        --build-arg https_proxy=$HTTPS_PROXY
+        -f dockerfile
+        -t $docker_image .
+    - docker push $docker_image
+    - docker tag $docker_image $docker_image_version
+    - docker push $docker_image_version
+  tags:
+    - docker
+
+dev:
+  stage: dev
+  image: alpine/ansible:2.18.1
+  script:
+    - mkdir /root/.ssh
+    - cat $SSH_KEY > /root/.ssh/id_rsa
+    - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
+    - chmod 600 /root/.ssh/id_rsa
+    - chmod 600 /root/.ssh/known_hosts
+    - |
+      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
+        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
+      else
+        export BRANCH_SUFFIX=""
+      fi
+    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
+    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
+    - echo "La valeur de docker_image est $docker_image"
+    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/dev.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
+  tags:
+    - docker
+  needs:
+    - build
+
+preprod:
+  stage: preprod
+  image: alpine/ansible:2.18.1
+  script:
+    - mkdir /root/.ssh
+    - cat $SSH_KEY > /root/.ssh/id_rsa
+    - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
+    - chmod 600 /root/.ssh/id_rsa
+    - chmod 600 /root/.ssh/known_hosts
+    - |
+      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
+        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
+      else
+        export BRANCH_SUFFIX=""
+      fi
+    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
+    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
+    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/preprod.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
+  tags:
+    - docker
+  when: manual
+  needs:
+    - dev
+
+prod:
+  stage: prod
+  image: alpine/ansible:2.18.1
+  script:
+    - mkdir /root/.ssh
+    - cat $SSH_KEY > /root/.ssh/id_rsa
+    - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
+    - chmod 600 /root/.ssh/id_rsa
+    - chmod 600 /root/.ssh/known_hosts
+    - |
+      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
+        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
+      else
+        export BRANCH_SUFFIX=""
+      fi
+    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
+    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
+    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/prod.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
+  tags:
+    - docker
+  when: manual
+  needs:
+    - preprod
+

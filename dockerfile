@@ -1,10 +1,23 @@
-FROM node:20-alpine
+ARG NODE_VERSION=23
+FROM node:${NODE_VERSION}-alpine AS builder
 
-USER node
 WORKDIR /home/node
 
+COPY package*.json ./
+RUN npm ci
+
 COPY --chown=node:node . .
+RUN npm run build
 
-RUN npm i
+FROM node:${NODE_VERSION}-alpine
 
-CMD ["npm", "run", "start:api:watch"]
+WORKDIR /home/node
+
+COPY --from=builder --chown=node:node /home/node/dist ./dist
+COPY --from=builder --chown=node:node /home/node/package*.json ./
+
+RUN npm ci --omit=dev
+
+USER node
+
+CMD ["node", "dist/server.js"]
