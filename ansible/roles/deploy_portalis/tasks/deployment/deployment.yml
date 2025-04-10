@@ -26,7 +26,7 @@
               - name: "{{ app_id }}"
                 image: "{{ portalis_image }}"
                 ports:
-                  - containerPort: 3000
+                  - containerPort: "{{ api_port }}"
                 envFrom:
                   - configMapRef:
                       name: "api-config"
