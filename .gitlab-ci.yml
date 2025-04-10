@@ -22,7 +22,8 @@ before_script:
     fi
   - export docker_image_dev="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest-dev"
   - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
-  - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$PROJECT_VERSION"
+  #- export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$PROJECT_VERSION"
+  - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
 
 build_dev:
   stage: build
@@ -59,6 +60,7 @@ dev:
     - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
+    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/$inventaire.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   tags:
     - docker
   needs:
@@ -73,8 +75,10 @@ preprod:
     - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
+    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/$inventaire.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   tags:
     - docker
+  when: manual
   needs:
     - dev
 
@@ -87,6 +91,7 @@ prod:
     - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
+    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/$inventaire.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   tags:
     - docker
   when: manual
