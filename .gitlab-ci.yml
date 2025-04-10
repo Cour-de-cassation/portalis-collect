@@ -63,7 +63,7 @@ build:
 
 dev:
   stage: dev
-  image: alpine/ansible:2.16.1
+  image: alpine/ansible:2.18.1
   script:
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
@@ -78,6 +78,7 @@ dev:
 
 preprod:
   stage: preprod
+  image: alpine/ansible:2.18.1
   script:
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
@@ -93,6 +94,7 @@ preprod:
 
 prod:
   stage: prod
+  image: alpine/ansible:2.18.1
   script:
     - mkdir /root/.ssh
     - cat $SSH_KEY > /root/.ssh/id_rsa
