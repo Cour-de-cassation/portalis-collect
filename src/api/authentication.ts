@@ -1,6 +1,11 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response, Router, urlencoded } from "express";
+import OAuth2Server, {
+  Request as oAuthRequest,
+  Response as oAuthResponse,
+} from "@node-oauth/oauth2-server";
+
 import { unauthorizedError } from "../library/error";
-import { validateBasic } from "../service/authentication";
+import { validateBasic, validateOAuth } from "../service/authentication";
 
 export const basicAuthHandler = (
   req: Request,
@@ -16,7 +21,7 @@ export const basicAuthHandler = (
       "ascii"
     );
     const [username, password] = credentials.split(":");
-    if (validateBasic(username, password)) return next();
+    if (!!validateBasic(username, password)) return next();
   }
 
   return next(
@@ -26,6 +31,48 @@ export const basicAuthHandler = (
   );
 };
 
-export const oAuthHandler = (req: Request, _: Response, next: NextFunction) => {
-  next();
+const oAuthServer = new OAuth2Server({ model: validateOAuth });
+
+export const oAuthHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authenticatedToken = await oAuthServer.authenticate(
+      new oAuthRequest(req),
+      new oAuthResponse(res)
+    );
+    if (!authenticatedToken) throw new Error("AuthenticatedToken is missing.");
+    return next();
+  } catch (err) {
+    return next(
+      unauthorizedError(new Error("Token or credentials seems incorrect."))
+    );
+  }
 };
+
+const app = Router();
+app.post("/token", urlencoded({ extended: true }), async (req, res, next) => {
+  try {
+    const t = await oAuthServer.token(
+      new oAuthRequest(req),
+      new oAuthResponse(res),
+      {}
+    );
+    res.send({
+      accessToken: t.accessToken,
+      accessTokenExpiresAt: t.accessTokenExpiresAt,
+    });
+  } catch (err) {
+    next(
+      unauthorizedError(
+        new Error(
+          err instanceof Error ? err.message : "Credentials seems incorrect."
+        )
+      )
+    );
+  }
+});
+
+export default app;
