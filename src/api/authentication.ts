@@ -58,7 +58,7 @@ app.post("/token", urlencoded({ extended: true }), async (req, res, next) => {
     const t = await oAuthServer.token(
       new oAuthRequest(req),
       new oAuthResponse(res),
-      {}
+      {} // TS & JS of oAuth2Server are weird -> options seems needed even if it's empty.
     );
     res.send({
       accessToken: t.accessToken,

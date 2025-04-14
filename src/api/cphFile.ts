@@ -58,7 +58,6 @@ app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
     const file = parseFile(req.file);
     const body = parseBody(req.body[BODY_FIELD]);
     await saveRawCph(file, body);
-    res.setHeader("Content-Type", "text/plain");
     res.send({ message: "Your file has been saved." });
   } catch (err: unknown) {
     req.log.error(err);
