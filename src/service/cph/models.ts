@@ -1,10 +1,9 @@
 import zod from "zod";
 import { NotSupported, notSupported } from "../../library/error";
 import {
-  Categories,
-  DecisionDTO,
+  Category,
+  UnIdentifiedDecision,
   LabelStatus,
-  Sources,
 } from "dbsder-api-types";
 
 const schemaPublicationRules = zod.object({
@@ -46,12 +45,12 @@ export function parseCphMetadatas(
 
 function computeCategoriesToOmit(
   pseudoRules: PublicationRules["occultationsComplementaires"]
-): `${Categories}`[] {
+): `${Category}`[] {
   return (
     Object.keys(
       pseudoRules
     ) as (keyof PublicationRules["occultationsComplementaires"])[]
-  ).reduce<`${Categories}`[]>((categories, k) => {
+  ).reduce<`${Category}`[]>((categories, k) => {
     switch (k) {
       default:
         return categories;
@@ -69,7 +68,7 @@ export function mapCphDecision(
   metadatas: CphMetadatas,
   content: string,
   publicationRules: PublicationRules
-): DecisionDTO {
+): any { // UnIdentifiedDecisionCph
   return {
     appeals: [],
     chamberId: "",
@@ -92,7 +91,7 @@ export function mapCphDecision(
     originalText: content,
     registerNumber: "",
     sourceId: 0,
-    sourceName: Sources.TCOM, // Warning => CPH
+    sourceName: "portalis-cph",
     blocOccultation: 1,
     selection: false,
   };
