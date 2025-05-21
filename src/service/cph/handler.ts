@@ -12,6 +12,7 @@ import { mardownToPlainText } from "../../library/markdown";
 import { XMLParser } from "fast-xml-parser";
 import {
   CphMetadatas,
+  cphMetadatasArray,
   mapCphDecision,
   parseCphMetadatas,
   parsePublicationRules,
@@ -20,7 +21,15 @@ import {
 import { sendToSder } from "../../library/decisionDB";
 import { S3_BUCKET_NAME_NORMALIZED, S3_BUCKET_NAME_RAW } from "../../library/env";
 
-const xmlParser = new XMLParser();
+const xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: "",
+  isArray: (_, jpath) =>
+    cphMetadatasArray.includes(jpath.slice("root.document.".length)),
+  transformTagName: (tagName) => tagName.toLowerCase(),
+  transformAttributeName: (attributeName) => attributeName.toLowerCase(),
+  parseTagValue: false,
+});
 
 type CphFile = {
   mimetype: string;
@@ -61,7 +70,7 @@ async function getCphMetadatas(
       new Error(`${fileNamePdf} has no xml attachment`)
     );
   const maybeCustomRules = parseCphMetadatas(xmlParser.parse(xmlFile.data));
-  if (maybeCustomRules instanceof Error) throw maybeCustomRules
+  if (maybeCustomRules instanceof Error) throw maybeCustomRules;
   return maybeCustomRules.root.document;
 }
 
@@ -80,10 +89,10 @@ async function getCphPublicationRules(
     S3_BUCKET_NAME_RAW,
     fileNamePdf.replace(".pdf", ".json")
   );
-  const maybePseudoRules = parsePublicationRules(JSON.parse(
-    pseudoCustomRulesBuffer.toString("utf8")
-  ))
-  if (maybePseudoRules instanceof Error) throw maybePseudoRules
+  const maybePseudoRules = parsePublicationRules(
+    JSON.parse(pseudoCustomRulesBuffer.toString("utf8"))
+  );
+  if (maybePseudoRules instanceof Error) throw maybePseudoRules;
   return maybePseudoRules;
 }
 
@@ -95,7 +104,8 @@ async function normalizeRawCphFile(fileNamePdf: string, cphFile: Buffer) {
   const cphDecision = mapCphDecision(
     cphMetadatas,
     cphContent,
-    cphPseudoCustomRules
+    cphPseudoCustomRules,
+    fileNamePdf
   );
 
   await sendToSder(cphDecision);
