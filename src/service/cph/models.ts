@@ -1,7 +1,7 @@
-import zod, { string } from "zod";
+import zod from "zod";
 import { NotSupported, notSupported } from "../../library/error";
 import {
-  Category,
+  UnIdentifiedDecisionCph,
   LabelStatus,
 } from "dbsder-api-types";
 
@@ -103,21 +103,6 @@ export function parseCphMetadatas(
   return result.data;
 }
 
-function computeCategoriesToOmit(
-  pseudoRules: PublicationRules["occultationsComplementaires"]
-): `${Category}`[] {
-  return (
-    Object.keys(
-      pseudoRules
-    ) as (keyof PublicationRules["occultationsComplementaires"])[]
-  ).reduce<`${Category}`[]>((categories, k) => {
-    switch (k) {
-      default:
-        return categories;
-    }
-  }, []);
-}
-
 function computeAdditionalTerms(
   pseudoRules: PublicationRules["occultationsComplementaires"]
 ): string {
@@ -129,7 +114,7 @@ export function mapCphDecision(
   content: string,
   publicationRules: PublicationRules,
   filenameSource: string
-): any { // UnIdentifiedDecisionCph
+): UnIdentifiedDecisionCph {
   return {
     sourceId: 0,
     sourceName: "portalis-cph",
@@ -160,9 +145,7 @@ export function mapCphDecision(
       additionalTerms: computeAdditionalTerms(
         publicationRules.occultationsComplementaires
       ),
-      categoriesToOmit: computeCategoriesToOmit(
-        publicationRules.occultationsComplementaires
-      ),
+      categoriesToOmit: [],
       motivationOccultation: false,
     },
     formation: metadatas.audiences_dossier.audience_dossier.find(
