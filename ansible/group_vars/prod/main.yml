@@ -14,3 +14,5 @@ av_host_path: "/data/av"
 node_env: development
 authentication_key: "{{ vault_authentication_key }}"
 hash_key: "{{ vault_hash_key }}"
+auth_strategy: "oAuth2"
+access_token_lifetime_in_seconds: "{{ vault_access_token_lifetime_in_seconds }}"

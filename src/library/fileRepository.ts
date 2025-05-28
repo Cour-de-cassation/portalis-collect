@@ -7,18 +7,8 @@ import {
   ListObjectsV2Command,
   _Object,
 } from "@aws-sdk/client-s3";
-import { missingValue, unexpectedError } from "./error";
-
-if (process.env.S3_URL == null)
-  throw missingValue("process.env.S3_URL", new Error());
-if (process.env.S3_REGION == null)
-  throw missingValue("process.env.S3_REGION", new Error());
-if (process.env.S3_ACCESS_KEY == null)
-  throw missingValue("process.env.S3_ACCESS_KEY", new Error());
-if (process.env.S3_SECRET_KEY == null)
-  throw missingValue("process.env.S3_SECRET_KEY", new Error());
-
-const { S3_URL, S3_REGION, S3_ACCESS_KEY, S3_SECRET_KEY } = process.env;
+import { unexpectedError } from "./error";
+import { S3_ACCESS_KEY, S3_REGION, S3_SECRET_KEY, S3_URL } from "./env";
 
 const S3Options: S3ClientConfig = {
   endpoint: S3_URL,

@@ -22,4 +22,5 @@
         NLP_PSEUDONYMISATION_API: "{{ nlp_pseudonymisation_api }}"
         AUTHENTICATION_ID: "{{ authentication_id }}"
         AUTH_STRATEGY: "{{ auth_strategy }}"
+        ACCESS_TOKEN_LIFETIME_IN_SECONDS: "{{ access_token_lifetime_in_seconds }}"
 ...

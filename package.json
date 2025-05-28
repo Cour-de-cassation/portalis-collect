@@ -15,7 +15,7 @@
     "@node-oauth/oauth2-server": "^5.2.0",
     "axios": "^1.7.9",
     "cron": "^3.5.0",
-    "dbsder-api-types": "2.0.0",
+    "dbsder-api-types": "2.0.6",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "fast-xml-parser": "^4.x",
