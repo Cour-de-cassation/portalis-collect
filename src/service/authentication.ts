@@ -4,13 +4,7 @@ import {
   ClientCredentialsModel,
   User,
 } from "@node-oauth/oauth2-server"; // Warn: types of this lib are completely screw
-import { missingValue } from "../library/error";
-
-if (process.env.AUTHENTICATION_ID == null)
-  throw missingValue("process.env.AUTHENTICATION_ID", new Error());
-if (process.env.AUTHENTICATION_KEY == null)
-  throw missingValue("process.env.AUTHENTICATION_KEY", new Error());
-const { AUTHENTICATION_ID, AUTHENTICATION_KEY } = process.env;
+import { AUTHENTICATION_ID, AUTHENTICATION_KEY } from "../library/env";
 
 type ClientExtended = Client & { secret: string; user: { name: string } };
 

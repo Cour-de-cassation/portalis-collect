@@ -1,19 +1,14 @@
 import { CronJob } from "cron";
 import { normalizeRawCphFiles } from "./service/cph/handler";
 import { logger } from "./library/logger";
-import { missingValue } from "./library/error";
-
-if (process.env.NODE_ENV == null)
-  throw missingValue("process.env.NODE_ENV", new Error());
-
-const { NODE_ENV } = process.env;
+import { NODE_ENV, NORMALIZATION_BATCH_SCHEDULE } from "./library/env";
 
 const CRON_EVERY_HOUR =
   NODE_ENV === "local" ? new Date(Date.now() + 1000) : "0 * * * *";
 
 async function startNormalization() {
   CronJob.from({
-    cronTime: process.env.NORMALIZATION_BATCH_SCHEDULE || CRON_EVERY_HOUR,
+    cronTime: NORMALIZATION_BATCH_SCHEDULE ?? CRON_EVERY_HOUR,
     async onTick() {
       try {
         logger.info({

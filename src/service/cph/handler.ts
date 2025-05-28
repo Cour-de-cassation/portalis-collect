@@ -18,14 +18,9 @@ import {
   PublicationRules,
 } from "./models";
 import { sendToSder } from "../../library/decisionDB";
+import { S3_BUCKET_NAME_NORMALIZED, S3_BUCKET_NAME_RAW } from "../../library/env";
 
 const xmlParser = new XMLParser();
-
-if (process.env.S3_BUCKET_NAME_RAW == null)
-  throw missingValue("process.env.S3_BUCKET_NAME_RAW", new Error());
-if (process.env.S3_BUCKET_NAME_NORMALIZED == null)
-  throw missingValue("process.env.S3_BUCKET_NAME_NORMALIZED", new Error());
-const { S3_BUCKET_NAME_RAW, S3_BUCKET_NAME_NORMALIZED } = process.env;
 
 type CphFile = {
   mimetype: string;

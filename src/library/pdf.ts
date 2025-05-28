@@ -11,12 +11,8 @@ import {
   PDFStream,
   decodePDFRawStream,
 } from "pdf-lib";
-import { missingValue } from "./error";
+import { NLP_PSEUDONYMISATION_API } from "./env";
 
-if (process.env.NLP_PSEUDONYMISATION_API == null)
-  throw missingValue("process.env.NLP_PSEUDONYMISATION_API", new Error());
-
-const { NLP_PSEUDONYMISATION_API } = process.env;
 const ROUTE_URL = `${NLP_PSEUDONYMISATION_API}/pdf-to-text`;
 
 type PdfToMarkDownAnswer = {
