@@ -1,10 +1,6 @@
-import { missingValue, unexpectedError } from "../../library/error";
-import { v4 as uuid } from "uuid";
+import { MissingValue, UnexpectedError } from "../../library/error";
 import {
-  changeBucket,
   getFileByName,
-  getFileNames,
-  saveFile,
 } from "../../library/fileRepository";
 import { extractAttachments, pdfToMarkdown } from "../../library/pdf";
 import { logger } from "../../library/logger";
@@ -15,11 +11,11 @@ import {
   cphMetadatasArray,
   mapCphDecision,
   parseCphMetadatas,
-  parsePublicationRules,
   PublicationRules,
 } from "./models";
 import { sendToSder } from "../../library/decisionDB";
-import { S3_BUCKET_NAME_NORMALIZED, S3_BUCKET_NAME_RAW } from "../../library/env";
+import { fileBlocked, fileCreated, fileNormalized, getCollectedFiles, SupportedFile } from "../file/handler";
+import { PortalisFileInformation } from "../file/models";
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
@@ -31,32 +27,11 @@ const xmlParser = new XMLParser({
   parseTagValue: false,
 });
 
-type CphFile = {
-  mimetype: string;
-  size: number;
-  buffer: Buffer;
-};
-
 export function saveRawCph(
-  cphFile: CphFile,
+  cphFile: SupportedFile,
   publicationRules: PublicationRules
 ): Promise<unknown> {
-  const name = `${uuid()}-${new Date().toISOString()}`;
-
-  return Promise.all([
-    saveFile(
-      S3_BUCKET_NAME_RAW,
-      `${name}.pdf`,
-      cphFile.buffer,
-      "application/pdf"
-    ),
-    saveFile(
-      S3_BUCKET_NAME_RAW,
-      `${name}.json`,
-      Buffer.from(JSON.stringify(publicationRules)),
-      "application/json"
-    ),
-  ]);
+  return fileCreated(cphFile, publicationRules)
 }
 
 async function getCphMetadatas(
@@ -65,9 +40,9 @@ async function getCphMetadatas(
 ): Promise<CphMetadatas> {
   const [xmlFile = undefined] = await extractAttachments(cphFile);
   if (!xmlFile)
-    throw missingValue(
+    throw new MissingValue(
       "xmlFile",
-      new Error(`${fileNamePdf} has no xml attachment`)
+      `${fileNamePdf} has no xml attachment`
     );
   const maybeCustomRules = parseCphMetadatas(xmlParser.parse(xmlFile.data));
   if (maybeCustomRules instanceof Error) throw maybeCustomRules;
@@ -82,68 +57,41 @@ async function getCphContent(
   return mardownToPlainText(markdown);
 }
 
-async function getCphPublicationRules(
-  fileNamePdf: string
-): Promise<PublicationRules> {
-  const pseudoCustomRulesBuffer = await getFileByName(
-    S3_BUCKET_NAME_RAW,
-    fileNamePdf.replace(".pdf", ".json")
-  );
-  const maybePseudoRules = parsePublicationRules(
-    JSON.parse(pseudoCustomRulesBuffer.toString("utf8"))
-  );
-  if (maybePseudoRules instanceof Error) throw maybePseudoRules;
-  return maybePseudoRules;
-}
-
-async function normalizeRawCphFile(fileNamePdf: string, cphFile: Buffer) {
-  const cphMetadatas = await getCphMetadatas(fileNamePdf, cphFile);
-  const cphPseudoCustomRules = await getCphPublicationRules(fileNamePdf);
-  const cphContent = await getCphContent(fileNamePdf, cphFile);
+async function normalizeRawCphFile(fileInformation: PortalisFileInformation, cphFile: Buffer) {
+  const cphMetadatas = await getCphMetadatas(fileInformation.path, cphFile);
+  const cphPseudoCustomRules = fileInformation.metadatas;
+  const cphContent = await getCphContent(fileInformation.path, cphFile);
 
   const cphDecision = mapCphDecision(
     cphMetadatas,
     cphContent,
     cphPseudoCustomRules,
-    fileNamePdf
+    fileInformation.path
   );
 
   await sendToSder(cphDecision);
 
-  return Promise.all([
-    changeBucket(
-      S3_BUCKET_NAME_RAW,
-      S3_BUCKET_NAME_NORMALIZED,
-      fileNamePdf,
-      "application/pdf"
-    ),
-    changeBucket(
-      S3_BUCKET_NAME_RAW,
-      S3_BUCKET_NAME_NORMALIZED,
-      fileNamePdf.replace(".pdf", ".json"),
-      "application/json"
-    ),
-  ]);
+  return fileNormalized(fileInformation);
 }
 
-export async function normalizeRawCphFiles(): Promise<Error[]> {
-  const fileNames = await getFileNames(S3_BUCKET_NAME_RAW);
-  const decisionNames = fileNames.filter((_) => _.endsWith(".pdf"));
+export async function normalizeRawCphFiles(): Promise<unknown> {
+  const filesToNormalized = await getCollectedFiles<PortalisFileInformation["metadatas"]>()
 
-  const normalizeResults = decisionNames.map(async (fileNamePdf) => {
+  const normalizeResults = filesToNormalized.map(async (fileToNormalized) => {
     try {
       logger.info({
         operationName: "normalizeRawCphFiles",
-        msg: `normalize ${fileNamePdf}`,
+        msg: `normalize ${fileToNormalized._id} - ${fileToNormalized.path}`,
       });
-      const file = await getFileByName(S3_BUCKET_NAME_RAW, fileNamePdf);
-      await normalizeRawCphFile(fileNamePdf, file);
+      const file = await getFileByName(fileToNormalized.path);
+      await normalizeRawCphFile(fileToNormalized, file);
       return null;
     } catch (err) {
-      if (!(err instanceof Error))
-        return unexpectedError(new Error(`Unexpected error: ${err}`));
-      return err;
+      const error = err instanceof Error ? err : new UnexpectedError(`Unexpected error: ${err}`)
+      await fileBlocked(fileToNormalized, error)
+      logger.error({ msg: error.message, data: error })
+      return null;
     }
   });
-  return Promise.all(normalizeResults).then((_) => _.filter((_) => _ != null));
+  return Promise.all(normalizeResults);
 }

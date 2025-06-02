@@ -4,7 +4,7 @@ import OAuth2Server, {
   Response as oAuthResponse,
 } from "@node-oauth/oauth2-server";
 
-import { notSupported, unauthorizedError } from "../library/error";
+import { NotSupported, UnauthorizedError } from "../library/error";
 import { validateBasic, validateOAuth } from "../service/authentication";
 import { ACCESS_TOKEN_LIFETIME_IN_SECONDS, AUTH_STRATEGY } from "../library/env";
 
@@ -22,13 +22,12 @@ const basicAuthHandler = (
       "ascii"
     );
     const [username, password] = credentials.split(":");
-    if (!!validateBasic(username, password)) return next();
+
+    if (!!username && !!password && !!validateBasic(username, password)) return next();
   }
 
   return next(
-    unauthorizedError(
-      new Error("Basic auth Username or password seems incorrect.")
-    )
+    new UnauthorizedError("Basic auth Username or password seems incorrect.")
   );
 };
 
@@ -49,7 +48,7 @@ function oAuthHandler(
       return next();
     } catch (err) {
       return next(
-        unauthorizedError(new Error("Token or credentials seems incorrect."))
+        new UnauthorizedError("Token or credentials seems incorrect.")
       );
     }
   };
@@ -73,10 +72,8 @@ function oAuthTokenRoute(oAuthServer: OAuth2Server) {
       });
     } catch (err) {
       next(
-        unauthorizedError(
-          new Error(
-            err instanceof Error ? err.message : "Credentials seems incorrect."
-          )
+        new UnauthorizedError(
+          err instanceof Error ? err.message : "Credentials seems incorrect."
         )
       );
     }
@@ -92,7 +89,7 @@ function authRouteConstructor(): Router {
   }
 
   const accessTokenLifetime = ACCESS_TOKEN_LIFETIME_IN_SECONDS == null ? NaN : parseInt(ACCESS_TOKEN_LIFETIME_IN_SECONDS)
-  if (isNaN(accessTokenLifetime)) throw notSupported("ACCESS_TOKEN_LIFETIME_IN_SECONDS", ACCESS_TOKEN_LIFETIME_IN_SECONDS, new Error())
+  if (isNaN(accessTokenLifetime)) throw new NotSupported("ACCESS_TOKEN_LIFETIME_IN_SECONDS", ACCESS_TOKEN_LIFETIME_IN_SECONDS)
   const oAuthServer = new OAuth2Server({ model: validateOAuth, accessTokenLifetime });
 
   app.post("/token", urlencoded({ extended: true }), oAuthTokenRoute(oAuthServer))

@@ -1,5 +1,5 @@
 import zod from "zod";
-import { NotSupported, notSupported } from "../../library/error";
+import { NotSupported, toNotSupported } from "../../library/error";
 import {
   UnIdentifiedDecisionCph,
   LabelStatus,
@@ -20,7 +20,7 @@ export function parsePublicationRules(
 ): PublicationRules | NotSupported {
   const result = schemaPublicationRules.safeParse(maybePublicationRules);
   if (result.error)
-    return notSupported(
+    return toNotSupported(
       "publicationRules",
       maybePublicationRules,
       result.error
@@ -99,7 +99,7 @@ export function parseCphMetadatas(
   console.dir(cphMetadatas, { depth: null });
   const result = pdfMetadata.safeParse(cphMetadatas);
   if (result.error)
-    return notSupported("cphMetadatas", cphMetadatas, result.error);
+    return toNotSupported("cphMetadatas", cphMetadatas, result.error);
   return result.data;
 }
 
