@@ -13,6 +13,7 @@
         labels:
           app: "{{ portalis_application }}"
       data:
+        NODE_ENV: "{{ node_env }}"
         DBSDER_API_URL: "{{ dbsder_api_url }}"
         PORT: "{{ api_port }}"
         USE_AUTH: "{{ use_auth }}"
