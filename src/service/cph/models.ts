@@ -3,6 +3,9 @@ import { NotSupported, toNotSupported } from "../../library/error";
 import {
   UnIdentifiedDecisionCph,
   LabelStatus,
+  PublishStatus,
+  SuiviOccultation,
+  CodeNac,
 } from "dbsder-api-types";
 
 const schemaPublicationRules = zod.object({
@@ -96,7 +99,6 @@ export type CphMetadatas = zod.infer<typeof schemaCphMetadatas>;
 export function parseCphMetadatas(
   cphMetadatas: any
 ): { root: { document: CphMetadatas } } | NotSupported {
-  console.dir(cphMetadatas, { depth: null });
   const result = pdfMetadata.safeParse(cphMetadatas);
   if (result.error)
     return toNotSupported("cphMetadatas", cphMetadatas, result.error);
@@ -113,24 +115,28 @@ export function mapCphDecision(
   metadatas: CphMetadatas,
   content: string,
   publicationRules: PublicationRules,
+  codeNac: CodeNac,
   filenameSource: string
 ): UnIdentifiedDecisionCph {
+  const recommandationOccultation = publicationRules.occultationsComplementaires
+    .suiviRecommandationOccultation
+    ? SuiviOccultation.CONFORME
+    : SuiviOccultation.AUCUNE;
+
   return {
-    sourceId: 0,
+    sourceId: 0,// publicationRules.identifiantDecision, TODO: will be a string
     sourceName: "portalis-cph",
     originalText: content,
+    labelStatus: LabelStatus.TOBETREATED,
+    publishStatus: PublishStatus.TOBEPUBLISHED,
     dateCreation: new Date().toISOString(),
     dateDecision: new Date(
       parseInt(metadatas.decision.date.slice(0, 4)),
       parseInt(metadatas.decision.date.slice(4, 6)) - 1,
       parseInt(metadatas.decision.date.slice(6, 8))
     ).toISOString(),
-    public:
-      (metadatas.evenement_porteur.caracteristiques.caracteristique.find(
-        (_) => _.mnemo === "PUBD"
-      )?.valeur ?? "audience publique") === "audience publique",
     NACCode: metadatas.dossier.nature_affaire_civile.code,
-    // NACLibelle: metadatas.dossier.nature_affaire_civile.libelle,
+    // NACLibelle: metadatas.dossier.nature_affaire_civile.libelle, // TODO: which value ? - low
     endCaseCode: (
       metadatas.decision.codes_decision
         .code_decision[0] as CphMetadatas["decision"]["codes_decision"]["code_decision"][number]
@@ -138,19 +144,36 @@ export function mapCphDecision(
     // libelleEndCaseCode: endCaseCode: (
     //   metadatas.decision.codes_decision
     //     .code_decision[0] as CphMetadatas["decision"]["codes_decision"]["code_decision"][number]
-    // ).libelle,
-    labelStatus: LabelStatus.TOBETREATED,
-    // blocOccultation: 0,
+    // ).libelle, // TODO: which value ? - low
+    jurisdictionCode: "", // TODO: which value ? - high
+    jurisdictionId: "", // TODO: which value ? - high
+    jurisdictionName: "", // TODO: which value ? - high
+    selection: publicationRules.interetParticulier,
+    sommaire: publicationRules.sommaireInteretParticulier,
+    blocOccultation: codeNac.blocOccultationCA,
     occultation: {
       additionalTerms: computeAdditionalTerms(
         publicationRules.occultationsComplementaires
       ),
-      categoriesToOmit: [],
+      categoriesToOmit: codeNac.categoriesToOmitCA[recommandationOccultation],
       motivationOccultation: false,
     },
+    recommandationOccultation,
     formation: metadatas.audiences_dossier.audience_dossier.find(
       (_) => _.chronologie === "COURANTE"
     )?.formation,
+    parties: [], // TODO: which value ? - low
+    composition: [], // TODO: which value ? - low
+    tiers: [], // TODO: which value ? - low
+    public:
+      (metadatas.evenement_porteur.caracteristiques.caracteristique.find(
+        (_) => _.mnemo === "PUBD"
+      )?.valeur ?? "audience publique") === "audience publique",
+    debatPublic: (metadatas.evenement_porteur.caracteristiques.caracteristique.find(
+      (_) => _.mnemo === "PUB"
+    )?.valeur ?? "") === "", // TODO: which value ? - high
+    pourvoiCourDeCassation: false, // TODO: which value ? - high
+    pourvoiLocal: false, // TODO: which value ? - high
     filenameSource,
   };
 }

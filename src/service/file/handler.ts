@@ -48,12 +48,15 @@ export async function fileNormalized<T>(file: FileInformation<T>) {
     }
 }
 
-export async function fileBlocked<T>(file: FileInformation<T>, reason: Error) {
+export async function fileBlocked<T>(file: FileInformation<T>, error: Error) {
     const date = new Date()
 
     try {
-        const updatedFileInformation = await updateFileInformation(file._id, [...file.events, { type: "blocked", date, reason }])
-        if (!updatedFileInformation) throw new MissingValue("fileInformation", `file with id ${file._id} is missing on collection ${S3_BUCKET_NAME} but blocked by ${reason}`)
+        const updatedFileInformation = await updateFileInformation(file._id, [
+          ...file.events,
+          { type: "blocked", date, reason: error.stack ?? error.message },
+        ]);
+        if (!updatedFileInformation) throw new MissingValue("fileInformation", `file with id ${file._id} is missing on collection ${S3_BUCKET_NAME} but blocked by ${error}`)
         return updatedFileInformation
     } catch (err) {
         if (isMissingValue(err)) throw err

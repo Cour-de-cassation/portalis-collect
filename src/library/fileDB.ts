@@ -27,11 +27,11 @@ export async function updateFileInformation<T>(
     const db = await dbConnect()
     return db
         .collection<FileInformation<T>>(S3_BUCKET_NAME)
-        .findOneAndUpdate({ _id: id }, { events }, { returnDocument: "after" })
+        .findOneAndUpdate({ _id: id }, { $set: { events } }, { returnDocument: "after" })
 }
 
 export async function findFileInformations<T>(filters: Filter<FileInformation<T>>): Promise<FileInformation<T>[]> {
     const db = await dbConnect()
     // Todo: check pagination or streaming to avoid a RAM overflow on empty filters
     return db.collection<FileInformation<T>>(S3_BUCKET_NAME).find(filters).toArray()
-  }
+}

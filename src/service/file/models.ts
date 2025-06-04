@@ -14,7 +14,7 @@ type Normalized = {
 type Blocked = {
     type: "blocked",
     date: Date,
-    reason: Error
+    reason: string
 }
 
 export type FileInformation<T> = {

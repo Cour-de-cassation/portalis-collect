@@ -1,4 +1,4 @@
-import { MissingValue, UnexpectedError } from "../../library/error";
+import { MissingValue, NotFound, UnexpectedError } from "../../library/error";
 import {
   getFileByName,
 } from "../../library/fileRepository";
@@ -13,7 +13,7 @@ import {
   parseCphMetadatas,
   PublicationRules,
 } from "./models";
-import { sendToSder } from "../../library/decisionDB";
+import { getCodeNac, sendToSder } from "../../library/decisionDB";
 import { fileBlocked, fileCreated, fileNormalized, getCollectedFiles, SupportedFile } from "../file/handler";
 import { PortalisFileInformation } from "../file/models";
 
@@ -53,7 +53,9 @@ async function getCphContent(
   fileNamePdf: string,
   cphFile: Buffer
 ): Promise<string> {
+  logger.info({ message: "Waiting for text extraction" })
   const markdown = await pdfToMarkdown(fileNamePdf, cphFile);
+  logger.info({ message: "Text successfully extracted" })
   return mardownToPlainText(markdown);
 }
 
@@ -61,11 +63,15 @@ async function normalizeRawCphFile(fileInformation: PortalisFileInformation, cph
   const cphMetadatas = await getCphMetadatas(fileInformation.path, cphFile);
   const cphPseudoCustomRules = fileInformation.metadatas;
   const cphContent = await getCphContent(fileInformation.path, cphFile);
+  const codeNac = await getCodeNac(cphMetadatas.dossier.nature_affaire_civile.code)
+
+  if (!codeNac) throw new NotFound("codeNac", `codeNac ${cphMetadatas.dossier.nature_affaire_civile.code} not found`)
 
   const cphDecision = mapCphDecision(
     cphMetadatas,
     cphContent,
     cphPseudoCustomRules,
+    codeNac,
     fileInformation.path
   );
 
@@ -89,7 +95,7 @@ export async function normalizeRawCphFiles(): Promise<unknown> {
     } catch (err) {
       const error = err instanceof Error ? err : new UnexpectedError(`Unexpected error: ${err}`)
       await fileBlocked(fileToNormalized, error)
-      logger.error({ msg: error.message, data: error })
+      logger.error({ msg: error.message })
       return null;
     }
   });
