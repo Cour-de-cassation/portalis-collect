@@ -10,4 +10,4 @@ RUN npm run build
 
 USER node
 
-CMD ["node", "dist/server.js"]
+CMD ["npm", "run", "start:api:watch"]
