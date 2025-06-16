@@ -8,8 +8,7 @@ portalis_private_name: "pts.judilibre-prive.local"
 
 s3_url: "http://bucket-service.juritj.svc.cluster.local:9000"
 s3_region: "eu-west-paris-1"
-s3_bucket_name_raw: "portalis-collect-test-bucket-raw"
-s3_bucket_name_normalized: "portalis-collect-test-bucket-normalized"
+s3_bucket_name: "portalis-collect-test-bucket"
 
 use_auth: "oauth"
 oauth_client_id: "portalis"
