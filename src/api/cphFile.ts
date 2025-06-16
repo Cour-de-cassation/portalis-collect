@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { missingValue, notSupported } from "../library/error";
+import { MissingValue, NotSupported } from "../library/error";
 import { saveRawCph } from "../service/cph/handler";
 import { parsePublicationRules } from "../service/cph/models";
 
@@ -17,23 +17,21 @@ const upload = multer();
 
 function parseFile(file: Express.Multer.File | undefined) {
   if (!file)
-    throw missingValue(
+    throw new MissingValue(
       FILE_FIELD,
-      new Error(
-        `Decision file is missing on request form-data key: ${FILE_FIELD}`
-      )
+      `Decision file is missing on request form-data key: ${FILE_FIELD}`
     );
   if (file.mimetype !== "application/pdf")
-    throw notSupported(
+    throw new NotSupported(
       "file.mimetype",
       file.mimetype,
-      new Error("Decision file should be a PDF file")
+      "Decision file should be a PDF file"
     );
   if (file.size >= FILE_MAX_SIZE.size)
-    throw notSupported(
+    throw new NotSupported(
       "file.size",
       file.size,
-      new Error(`Decision file max size is ${FILE_MAX_SIZE.readSize}`)
+      `Decision file max size is ${FILE_MAX_SIZE.readSize}`
     );
 
   return file;
@@ -41,9 +39,9 @@ function parseFile(file: Express.Multer.File | undefined) {
 
 function parseBody(body: string | undefined) {
   if (!body)
-    throw missingValue(
+    throw new MissingValue(
       FILE_FIELD,
-      new Error(`${BODY_FIELD} is missing on request body`)
+      `${BODY_FIELD} is missing on request body`
     );
   const maybeBody = JSON.parse(body);
   const maybePublicationRules = parsePublicationRules(maybeBody);

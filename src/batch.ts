@@ -10,20 +10,11 @@ async function startNormalization() {
   CronJob.from({
     cronTime: NORMALIZATION_BATCH_SCHEDULE ?? CRON_EVERY_HOUR,
     async onTick() {
-      try {
-        logger.info({
-          operationName: "startNormalization",
-          msg: "Normalization starting",
-        });
-        (await normalizeRawCphFiles()).forEach((_) =>
-          logger.error({ msg: _.message, data: _ })
-        );
-      } catch (error: any) {
-        logger.error({
-          msg: error instanceof Error ? error.message : "Unknown error format",
-          data: error,
-        });
-      }
+      logger.info({
+        operationName: "startNormalization",
+        msg: "Normalization starting",
+      });
+      await normalizeRawCphFiles()
     },
     waitForCompletion: true, // onTick cannot be retry if an instance of it is running
     timeZone: "Europe/Paris",

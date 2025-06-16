@@ -1,49 +1,77 @@
-export type NotSupported = Error & {
-  type: "notSupported";
-  variableName: string;
-  variableValue: unknown;
-};
-export function notSupported(
-  variableName: string,
-  variableValue: unknown,
-  error: Error
-): NotSupported {
-  if (!error.message) error.message = `value: ${variableValue} is not supported to ${variableName}.`
-  return Object.assign(error, {
-    variableName,
-    variableValue,
-    type: "notSupported" as const,
-  });
+export class NotSupported extends Error {
+  type = "notSupported" as const
+  variableName: string
+  variableValue: unknown
+  constructor(variableName: string, variableValue: unknown, message?: string) {
+    const _message = message ? message : `value: ${variableValue} is not supported to ${variableName}.`
+    super(_message)
+    this.variableName = variableName
+    this.variableValue = variableValue
+  }
+}
+export function toNotSupported(variableName: string, variableValue: unknown, error: Error) {
+  return Object.assign(new NotSupported(variableName, variableValue), error)
 }
 
-export type MissingValue = Error & {
-  type: "missingValue";
-  variableName: string;
-};
-export function missingValue(variableName: string, error: Error): MissingValue {
-  if (!error.message) error.message = `${variableName} is missing.`
-  return Object.assign(error, {
-    variableName,
-    type: "missingValue" as const,
-  });
+export class MissingValue extends Error {
+  type = "missingValue" as const
+  variableName: string
+  constructor(variableName: string, message?: string) {
+    const _message = message ? message : `${variableName} is required but missing.`
+    super(_message)
+    this.variableName = variableName
+  }
+}
+export function isMissingValue(x: any) {
+  return x?.type === "missingValue" && x instanceof Error
+}
+export class NotFound extends Error {
+  type = "notFound" as const
+  variableName: string
+  constructor(variableName: string, message?: string) {
+    const _message = message ? message : `${variableName} not found.`
+    super(_message)
+    this.variableName = variableName
+  }
 }
 
-export type UnauthorizedError = Error & {
-  type: "unauthorizedError";
-};
-export function unauthorizedError(error: Error): UnauthorizedError {
-  if (!error.message) error.message = `Resource needs to be logged to access. Currently unauthorized.`
-  return Object.assign(error, {
-    type: "unauthorizedError" as const,
-  });
+export class UnauthorizedError extends Error {
+  type = "unauthorizedError" as const
+  constructor(message?: string) {
+    const _message = message ? message : `Resource needs to be logged to access. Currently unauthorized.`
+    super(_message)
+  }
 }
 
-export type UnexpectedError = Error & {
-  type: "unexpectedError";
-};
-export function unexpectedError(error: Error): UnexpectedError {
-  if (!error.message) error.message = `Unexepected error occurs.`
-  return Object.assign(error, {
-    type: "unexpectedError" as const,
-  });
+export class ForbiddenError extends Error {
+  type = "forbiddenError" as const
+  constructor(message?: string) {
+    const _message = message ? message : `Your connexion cannot access to this resource. Currently forbidden.`
+    super(_message)
+  }
+}
+
+export class UnexpectedError extends Error {
+  type = "unexpectedError" as const
+  constructor(message?: string) {
+    const _message = message ? message : `Unexepected error occurs.`
+    super(_message)
+  }
+}
+export function toUnexpectedError(error: Error) {
+  return Object.assign(new UnexpectedError(), error)
+}
+
+type CustomError = NotSupported | MissingValue | NotFound | UnauthorizedError | ForbiddenError | UnexpectedError
+
+export function isCustomError(x: any): x is CustomError {
+  switch (x.type) {
+    case "notSupported":
+    case "missingValue":
+    case "unauthorizedError":
+    case "unexpectedError":
+      return x instanceof Error
+    default:
+      return false
+  }
 }

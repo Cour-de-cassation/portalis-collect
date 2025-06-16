@@ -24,4 +24,5 @@
         AUTHENTICATION_ID: "{{ authentication_id }}"
         AUTH_STRATEGY: "{{ auth_strategy }}"
         ACCESS_TOKEN_LIFETIME_IN_SECONDS: "{{ access_token_lifetime_in_seconds }}"
+        FILE_DB_URL: "{{ file_db_url }}"
 ...

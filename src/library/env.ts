@@ -1,36 +1,36 @@
 import dotenv from 'dotenv'
-import { missingValue } from './error'
+import { MissingValue } from './error'
 
 if (!process.env.NODE_ENV) dotenv.config()
 
 if (process.env.AUTHENTICATION_ID == null)
-  throw missingValue("process.env.AUTHENTICATION_ID", new Error());
+  throw new MissingValue("process.env.AUTHENTICATION_ID");
 if (process.env.AUTHENTICATION_KEY == null)
-  throw missingValue("process.env.AUTHENTICATION_KEY", new Error());
+  throw new MissingValue("process.env.AUTHENTICATION_KEY");
 if (process.env.AUTH_STRATEGY == null)
-  throw missingValue("process.env.AUTH_STRATEGY", new Error());
+  throw new MissingValue("process.env.AUTH_STRATEGY");
 if (process.env.DBSDER_API_KEY == null)
-  throw missingValue("process.env.DBSDER_API_KEY", new Error());
+  throw new MissingValue("process.env.DBSDER_API_KEY");
 if (process.env.DBSDER_API_URL == null)
-  throw missingValue("process.env.DBSDER_API_URL", new Error());
+  throw new MissingValue("process.env.DBSDER_API_URL");
+if (process.env.FILE_DB_URL == null)
+  throw new MissingValue('process.env.FILE_DB_URL')
 if (process.env.NLP_PSEUDONYMISATION_API == null)
-  throw missingValue("process.env.NLP_PSEUDONYMISATION_API", new Error());
+  throw new MissingValue("process.env.NLP_PSEUDONYMISATION_API");
 if (process.env.NODE_ENV == null)
-  throw missingValue("process.env.NODE_ENV", new Error());
+  throw new MissingValue("process.env.NODE_ENV");
 if (process.env.PORT == null)
-  throw missingValue("process.env.PORT", new Error());
+  throw new MissingValue("process.env.PORT");
 if (process.env.S3_ACCESS_KEY == null)
-  throw missingValue("process.env.S3_ACCESS_KEY", new Error());
-if (process.env.S3_BUCKET_NAME_NORMALIZED == null)
-  throw missingValue("process.env.S3_BUCKET_NAME_NORMALIZED", new Error());
-if (process.env.S3_BUCKET_NAME_RAW == null)
-  throw missingValue("process.env.S3_BUCKET_NAME_RAW", new Error());
+  throw new MissingValue("process.env.S3_ACCESS_KEY");
+if (process.env.S3_BUCKET_NAME == null)
+  throw new MissingValue("process.env.S3_BUCKET_NAME");
 if (process.env.S3_REGION == null)
-  throw missingValue("process.env.S3_REGION", new Error());
+  throw new MissingValue("process.env.S3_REGION");
 if (process.env.S3_SECRET_KEY == null)
-  throw missingValue("process.env.S3_SECRET_KEY", new Error());
+  throw new MissingValue("process.env.S3_SECRET_KEY");
 if (process.env.S3_URL == null)
-  throw missingValue("process.env.S3_URL", new Error());
+  throw new MissingValue("process.env.S3_URL");
 
 export const {
   ACCESS_TOKEN_LIFETIME_IN_SECONDS,
@@ -39,13 +39,13 @@ export const {
   AUTH_STRATEGY,
   DBSDER_API_KEY,
   DBSDER_API_URL,
+  FILE_DB_URL,
   NLP_PSEUDONYMISATION_API,
   NODE_ENV,
   NORMALIZATION_BATCH_SCHEDULE,
   PORT,
   S3_ACCESS_KEY,
-  S3_BUCKET_NAME_NORMALIZED,
-  S3_BUCKET_NAME_RAW,
+  S3_BUCKET_NAME,
   S3_REGION,
   S3_SECRET_KEY,
   S3_URL
