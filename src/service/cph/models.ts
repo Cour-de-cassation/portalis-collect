@@ -15,7 +15,7 @@ const schemaPublicationRules = zod.object({
     elementsAOcculter: zod.array(zod.string()),
   }),
   interetParticulier: zod.boolean(),
-  sommaireInteretParticulier: zod.string(),
+  sommaireInteretParticulier: zod.string().optional(),
 });
 export type PublicationRules = zod.infer<typeof schemaPublicationRules>;
 export function parsePublicationRules(
@@ -88,20 +88,13 @@ const schemaCphMetadatas = zod.object({
 const pdfMetadata = zod.object({
   root: zod.object({ document: schemaCphMetadatas }),
 });
-export const cphMetadatasArray = [
-  // WARN: Convention about array are confused: xml parser parse like QueryString do, xml list is wrote as HTML list.
-  // We precise wich field is an array even if there are only one object inside - based on xml parser detection of array
-  "audiences_dossier.audience_dossier",
-  "decision.codes_decision.code_decision",
-  "evenement_porteur.caracteristiques.caracteristique",
-];
 export type CphMetadatas = zod.infer<typeof schemaCphMetadatas>;
 export function parseCphMetadatas(
   cphMetadatas: any
-): { root: { document: CphMetadatas } } | NotSupported {
+): { root: { document: CphMetadatas } } {
   const result = pdfMetadata.safeParse(cphMetadatas);
   if (result.error)
-    return toNotSupported("cphMetadatas", cphMetadatas, result.error);
+    throw toNotSupported("cphMetadatas", cphMetadatas, result.error);
   return result.data;
 }
 
