@@ -65,5 +65,5 @@ export async function fileBlocked<T>(file: FileInformation<T>, error: Error) {
 }
 
 export async function getCollectedFiles<T>(): Promise<FileInformation<T>[]> {
-    return findFileInformations({ events: { $size: 1 }, "events.0.type": "created" })
+    return findFileInformations({ events: { $not: { $elemMatch: { type: "normalized" }}} })
 }

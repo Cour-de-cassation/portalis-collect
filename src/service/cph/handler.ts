@@ -1,14 +1,12 @@
-import { MissingValue, NotFound, UnexpectedError } from "../../library/error";
+import { NotFound, NotSupported, UnexpectedError } from "../../library/error";
 import {
   getFileByName,
 } from "../../library/fileRepository";
 import { extractAttachments, pdfToMarkdown } from "../../library/pdf";
 import { logger } from "../../library/logger";
 import { mardownToPlainText } from "../../library/markdown";
-import { XMLParser } from "fast-xml-parser";
 import {
   CphMetadatas,
-  cphMetadatasArray,
   mapCphDecision,
   parseCphMetadatas,
   PublicationRules,
@@ -16,16 +14,7 @@ import {
 import { getCodeNac, sendToSder } from "../../library/decisionDB";
 import { fileBlocked, fileCreated, fileNormalized, getCollectedFiles, SupportedFile } from "../file/handler";
 import { PortalisFileInformation } from "../file/models";
-
-const xmlParser = new XMLParser({
-  ignoreAttributes: false,
-  attributeNamePrefix: "",
-  isArray: (_, jpath) =>
-    cphMetadatasArray.includes(jpath.slice("root.document.".length)),
-  transformTagName: (tagName) => tagName.toLowerCase(),
-  transformAttributeName: (attributeName) => attributeName.toLowerCase(),
-  parseTagValue: false,
-});
+import { parseXml } from "../../library/xml";
 
 export function saveRawCph(
   cphFile: SupportedFile,
@@ -34,19 +23,32 @@ export function saveRawCph(
   return fileCreated(cphFile, publicationRules)
 }
 
+function searchXml(
+  attachments: { name: string; data: Buffer; }[]
+): unknown {
+  const attachment = attachments.reduce<CphMetadatas | undefined>((acc, attachment, index) => {
+    try {
+      const xml = parseXml(attachment)
+      return acc ?? xml
+    } catch (err) {
+      logger.error({
+        operationName: "searchMetadatas",
+        msg: `Error on attachment ${index + 1}:\n` + (err instanceof Error ? err.message : (new UnexpectedError(`${err}`)).message)
+      })
+      return acc
+    }
+  }, undefined)
+
+  if (!attachment) throw new NotFound("attachement", "Xml metadatas attachement not found or bad formatted")
+  return attachment
+}
+
 async function getCphMetadatas(
-  fileNamePdf: string,
   cphFile: Buffer
 ): Promise<CphMetadatas> {
-  const [xmlFile = undefined] = await extractAttachments(cphFile);
-  if (!xmlFile)
-    throw new MissingValue(
-      "xmlFile",
-      `${fileNamePdf} has no xml attachment`
-    );
-  const maybeCustomRules = parseCphMetadatas(xmlParser.parse(xmlFile.data));
-  if (maybeCustomRules instanceof Error) throw maybeCustomRules;
-  return maybeCustomRules.root.document;
+  const attachments = await extractAttachments(cphFile);
+  const xml = searchXml(attachments)
+  return parseCphMetadatas(xml).root.document
 }
 
 async function getCphContent(
@@ -60,7 +62,7 @@ async function getCphContent(
 }
 
 async function normalizeRawCphFile(fileInformation: PortalisFileInformation, cphFile: Buffer) {
-  const cphMetadatas = await getCphMetadatas(fileInformation.path, cphFile);
+  const cphMetadatas = await getCphMetadatas(cphFile);
   const cphPseudoCustomRules = fileInformation.metadatas;
   const cphContent = await getCphContent(fileInformation.path, cphFile);
   const codeNac = await getCodeNac(cphMetadatas.dossier.nature_affaire_civile.code)
@@ -95,7 +97,7 @@ export async function normalizeRawCphFiles(): Promise<unknown> {
     } catch (err) {
       const error = err instanceof Error ? err : new UnexpectedError(`Unexpected error: ${err}`)
       await fileBlocked(fileToNormalized, error)
-      logger.error({ msg: error.message })
+      logger.error({ msg: error instanceof NotSupported && error.explain ? error.explain : error.message })
       return null;
     }
   });
