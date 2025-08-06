@@ -1,109 +1,80 @@
-image: docker:$DOCKER_BUILD_VERSION_NEW
+image: docker:20.10.22
 services:
-  - docker:$DOCKER_BUILD_VERSION_NEW-dind
+  - docker:20.10.22-dind
 
 variables:
-  PROJECT_VERSION: "1.0.0"
+  api_docker_image: '$CI_REGISTRY/cour-de-cassation/portalis-collect:$CI_COMMIT_SHORT_SHA'
 
 stages:
   - build
-  - dev
-  - preprod
-  - prod
+  - deploy
 
-build:
+build_and_push_api:
   stage: build
+  variables:
+    HTTP_PROXY: $HTTP_PROXY_DEV
+    HTTPS_PROXY: $HTTPS_PROXY_DEV
   script:
-    - echo "Logging in to Docker registry..."
     - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+
+    # To avoid rebuild existing image when addind tag to a commit
     - |
-      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
-        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
-      else
-        export BRANCH_SUFFIX=""
+      if docker pull "$api_docker_image"; then
+        echo "Docker image $api_docker_image already exist, skiping build and push."
+        exit 0
       fi
-    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
-    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
+
     - docker build
-        --build-arg http_proxy=$HTTP_PROXY
-        --build-arg https_proxy=$HTTPS_PROXY
-        -f dockerfile
-        -t $docker_image .
-    - docker push $docker_image
-    - docker tag $docker_image $docker_image_version
-    - docker push $docker_image_version
+      --build-arg http_proxy=$HTTP_PROXY
+      --build-arg https_proxy=$HTTPS_PROXY
+      -t $api_docker_image .
+    - docker push $api_docker_image
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_TAG'
   tags:
     - docker
 
-dev:
-  stage: dev
-  image: alpine/ansible:2.18.1
+.deploy_template:
+  stage: deploy
+  environment: $ENV
+  image: alpine/ansible:2.16.1
   script:
     - mkdir /root/.ssh
-    - cat $SSH_KEY > /root/.ssh/id_rsa
-    - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
+    - cat "$SSH_KEY" > /root/.ssh/id_rsa
+    - cat "$KNOWN_HOSTS" > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
-    - |
-      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
-        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
-      else
-        export BRANCH_SUFFIX=""
-      fi
-    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
-    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
-    - echo "La valeur de docker_image est $docker_image"
-    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/dev.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
+    - ansible-playbook -e portalis_image=$api_docker_image -i ansible/inventory/$ENV.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   tags:
     - docker
-  needs:
-    - build
 
-preprod:
-  stage: preprod
-  image: alpine/ansible:2.18.1
-  script:
-    - mkdir /root/.ssh
-    - cat $SSH_KEY > /root/.ssh/id_rsa
-    - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
-    - chmod 600 /root/.ssh/id_rsa
-    - chmod 600 /root/.ssh/known_hosts
-    - |
-      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
-        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
-      else
-        export BRANCH_SUFFIX=""
-      fi
-    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
-    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
-    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/preprod.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
-  tags:
-    - docker
-  when: manual
+deploy_dev:
+  variables:
+    ENV: dev
+  extends: .deploy_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_TAG'
+      when: on_success
   needs:
-    - dev
+    - build_and_push_api
 
-prod:
-  stage: prod
-  image: alpine/ansible:2.18.1
-  script:
-    - mkdir /root/.ssh
-    - cat $SSH_KEY > /root/.ssh/id_rsa
-    - cat $KNOWN_HOSTS > /root/.ssh/known_hosts
-    - chmod 600 /root/.ssh/id_rsa
-    - chmod 600 /root/.ssh/known_hosts
-    - |
-      if [ "$CI_DEFAULT_BRANCH" != "$CI_COMMIT_REF_NAME" ]; then
-        export BRANCH_SUFFIX="${CI_COMMIT_REF_NAME}-"
-      else
-        export BRANCH_SUFFIX=""
-      fi
-    - export docker_image="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}latest"
-    - export docker_image_version="$CI_REGISTRY/$CI_PROJECT_PATH:${BRANCH_SUFFIX}$CI_COMMIT_SHORT_SHA"
-    - ansible-playbook -e portalis_image=$docker_image  -i ansible/inventory/prod.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
-  tags:
-    - docker
-  when: manual
+deploy_preprod:
+  variables:
+    ENV: preprod
+  extends: .deploy_template
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: manual
   needs:
-    - preprod
+    - deploy_dev
 
+deploy_prod:
+  variables:
+    ENV: prod
+  extends: .deploy_template
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: manual
+  needs:
+    - deploy_preprod
