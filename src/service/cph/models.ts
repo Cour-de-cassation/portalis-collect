@@ -10,7 +10,7 @@ import {
 
 const schemaPublicationRules = zod.object({
   identifiantDecision: zod.string().trim().min(1),
-  occultationsComplementaires: zod.object({
+  recommandationOccultation: zod.object({
     suiviRecommandationOccultation: zod.boolean(),
     elementsAOcculter: zod.array(zod.string()),
   }),
@@ -99,7 +99,7 @@ export function parseCphMetadatas(
 }
 
 function computeAdditionalTerms(
-  pseudoRules: PublicationRules["occultationsComplementaires"]
+  pseudoRules: PublicationRules["recommandationOccultation"]
 ): string {
   return pseudoRules.elementsAOcculter.map((_) => `+${_}`).join("|");
 }
@@ -111,7 +111,7 @@ export function mapCphDecision(
   codeNac: CodeNac,
   filenameSource: string
 ): UnIdentifiedDecisionCph {
-  const recommandationOccultation = publicationRules.occultationsComplementaires
+  const recommandationOccultation = publicationRules.recommandationOccultation
     .suiviRecommandationOccultation
     ? SuiviOccultation.CONFORME
     : SuiviOccultation.AUCUNE;
@@ -146,7 +146,7 @@ export function mapCphDecision(
     blocOccultation: codeNac.blocOccultationCA,
     occultation: {
       additionalTerms: computeAdditionalTerms(
-        publicationRules.occultationsComplementaires
+        publicationRules.recommandationOccultation
       ),
       categoriesToOmit: codeNac.categoriesToOmitCA[recommandationOccultation],
       motivationOccultation: false,
