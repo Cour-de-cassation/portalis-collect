@@ -1,0 +1,11 @@
+name: opendata
+services:
+
+  portalis-collect:
+    build:
+      dockerfile: dockerfile.local
+    volumes:
+      - .:/home/node
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
