@@ -74,7 +74,10 @@ export class UnexpectedError extends Error {
   }
 }
 export function toUnexpectedError(error: Error) {
-  return Object.assign(new UnexpectedError(), error)
+  const unexpected = new UnexpectedError()
+  if (error.message?.length > 0) unexpected.message = error.message
+  if ((error.stack?.length ?? 0) > 0) unexpected.stack = error.stack
+  return unexpected
 }
 
 type CustomError = NotSupported | MissingValue | NotFound | UnauthorizedError | ForbiddenError | UnexpectedError

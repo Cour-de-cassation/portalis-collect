@@ -6,6 +6,8 @@ services:
       dockerfile: dockerfile.local
     volumes:
       - .:/home/node
+    ports:
+      - ${PORT}:${PORT}
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
