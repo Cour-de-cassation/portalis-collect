@@ -12,7 +12,7 @@
         namespace: "{{ portalis_namespace }}"
       spec:
         selector:
-          app: "{{ app_id }}"
+          app: "{{ api_id }}"
         ports:
           - name: api
             port: 3015
