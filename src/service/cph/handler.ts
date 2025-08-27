@@ -1,27 +1,19 @@
-import { NotFound, NotSupported, UnexpectedError } from "../../library/error";
+import { NotFound, UnexpectedError } from "../../library/error";
 import {
   getFileByName,
 } from "../../library/fileRepository";
-import { extractAttachments, pdfToMarkdown } from "../../library/pdf";
+import { extractAttachments, pdfToHtml } from "../../library/pdf";
 import { logger } from "../../library/logger";
-import { mardownToPlainText } from "../../library/markdown";
 import {
   CphMetadatas,
   mapCphDecision,
   parseCphMetadatas,
-  PublicationRules,
 } from "./models";
 import { getCodeNac, sendToSder } from "../../library/decisionDB";
-import { fileBlocked, fileCreated, fileNormalized, getCollectedFiles, SupportedFile } from "../file/handler";
-import { PortalisFileInformation } from "../file/models";
+import { blockRawDecision, normalizeRawDecision, getRawDecisionNotNormalized } from "../rawDecision/handler";
+import { PortalisFileInformation } from "../rawDecision/models";
 import { parseXml } from "../../library/xml";
-
-export function saveRawCph(
-  cphFile: SupportedFile,
-  publicationRules: PublicationRules
-): Promise<unknown> {
-  return fileCreated(cphFile, publicationRules)
-}
+import { htmlToPlainText } from "../../library/html";
 
 function searchXml(
   attachments: { name: string; data: Buffer; }[]
@@ -56,16 +48,16 @@ async function getCphContent(
   cphFile: Buffer
 ): Promise<string> {
   logger.info({ message: "Waiting for text extraction" })
-  const markdown = await pdfToMarkdown(fileNamePdf, cphFile);
+  const html = await pdfToHtml(fileNamePdf, cphFile);
   logger.info({ message: "Text successfully extracted" })
-  return mardownToPlainText(markdown);
+  return htmlToPlainText(html);
 }
 
 async function normalizeRawCphFile(fileInformation: PortalisFileInformation, cphFile: Buffer) {
   const cphMetadatas = await getCphMetadatas(cphFile);
   const cphPseudoCustomRules = fileInformation.metadatas;
-  const cphContent = await getCphContent(fileInformation.path, cphFile);
   const codeNac = await getCodeNac(cphMetadatas.dossier.nature_affaire_civile.code)
+  const cphContent = await getCphContent(fileInformation.path, cphFile);
 
   if (!codeNac) throw new NotFound("codeNac", `codeNac ${cphMetadatas.dossier.nature_affaire_civile.code} not found`)
 
@@ -79,27 +71,31 @@ async function normalizeRawCphFile(fileInformation: PortalisFileInformation, cph
 
   await sendToSder(cphDecision);
 
-  return fileNormalized(fileInformation);
+  return normalizeRawDecision(fileInformation);
+}
+
+async function onRawCph(cursorRawCph: { next: () => Promise<PortalisFileInformation | null> }): Promise<void> {
+  const rawCph = await cursorRawCph.next()
+  if (!rawCph) return Promise.resolve()
+
+    try {
+    logger.info({
+      operationName: "normalizeRawCphFiles",
+      msg: `normalize ${rawCph._id} - ${rawCph.path}`,
+    });
+    const file = await getFileByName(rawCph.path);
+    await normalizeRawCphFile(rawCph, file);
+    logger.info({ operationName: "normalizeRawCphFiles", msg: `${rawCph._id} normalized with success` })
+  } catch (err) {
+    const error = err instanceof Error ? err : new UnexpectedError(`Unexpected error: ${err}`)
+    await blockRawDecision(rawCph, error)
+    logger.error({ msg: error.message })
+  } finally {
+    await onRawCph(cursorRawCph)
+  }
 }
 
 export async function normalizeRawCphFiles(): Promise<unknown> {
-  const filesToNormalized = await getCollectedFiles<PortalisFileInformation["metadatas"]>()
-
-  const normalizeResults = filesToNormalized.map(async (fileToNormalized) => {
-    try {
-      logger.info({
-        operationName: "normalizeRawCphFiles",
-        msg: `normalize ${fileToNormalized._id} - ${fileToNormalized.path}`,
-      });
-      const file = await getFileByName(fileToNormalized.path);
-      await normalizeRawCphFile(fileToNormalized, file);
-      return null;
-    } catch (err) {
-      const error = err instanceof Error ? err : new UnexpectedError(`Unexpected error: ${err}`)
-      await fileBlocked(fileToNormalized, error)
-      logger.error({ msg: error instanceof NotSupported && error.explain ? error.explain : error.message })
-      return null;
-    }
-  });
-  return Promise.all(normalizeResults);
+  const rawCphList = await getRawDecisionNotNormalized<PortalisFileInformation["metadatas"]>()
+  return onRawCph(rawCphList)
 }

@@ -2,7 +2,7 @@ import express, { Express } from "express";
 import helmet from "helmet";
 
 import { logger, loggerHttp } from "./library/logger";
-import cphFileRoute from "./api/cphFile";
+import cphFileRoute from "./api/rawCph";
 import { errorHandler } from "./api/error";
 import authRoute from "./api/authentication";
 import { PORT } from "./library/env";

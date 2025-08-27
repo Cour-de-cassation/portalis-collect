@@ -15,12 +15,12 @@ import { NLP_PSEUDONYMISATION_API } from "./env";
 
 const ROUTE_URL = `${NLP_PSEUDONYMISATION_API}/pdf-to-text`;
 
-type PdfToMarkDownAnswer = {
-  markdownText: string;
+type PdfToHtmlAnswer = {
+  HTMLText: string;
   images: { [key: string]: string };
 };
 
-export async function pdfToMarkdown(
+export async function pdfToHtml(
   fileName: string,
   fileContent: Buffer
 ): Promise<string> {
@@ -30,10 +30,10 @@ export async function pdfToMarkdown(
     contentType: "application/pdf",
   });
 
-  const res = await axios.postForm<PdfToMarkDownAnswer>(ROUTE_URL, form, {
+  const res = await axios.postForm<PdfToHtmlAnswer>(ROUTE_URL, form, {
     headers: form.getHeaders(),
   });
-  return res.data.markdownText;
+  return res.data.HTMLText;
 }
 
 function extractAttachmentsFromPdfLib(pdfDoc: PDFDocument) {
