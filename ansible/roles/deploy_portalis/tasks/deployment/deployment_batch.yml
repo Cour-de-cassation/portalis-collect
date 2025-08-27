@@ -1,5 +1,5 @@
 ---
-- name: Create api Deployment
+- name: Create batch Deployment
   k8s:
     apply: true
     state: present
@@ -8,7 +8,7 @@
       apiVersion: apps/v1
       kind: Deployment
       metadata:
-        name: "{{ app_id }}-deployment"
+        name: "{{ batch_id }}-deployment"
         namespace: "{{ portalis_namespace }}"
         labels:
           app:
@@ -16,17 +16,18 @@
         replicas: 1
         selector:
           matchLabels:
-            app: "{{ app_id }}"
+            app: "{{ batch_id }}"
         template:
           metadata:
             labels:
-              app: "{{ app_id }}"
+              app: "{{ batch_id }}"
           spec:
             containers:
-              - name: "{{ app_id }}"
-                image: "{{ portalis_image }}"
-                ports:
-                  - containerPort: 3015
+              - name: "{{ batch_id }}"
+                image: "{{ portalis_batch_image }}"
+                env:
+                  - name: NORMALIZATION_BATCH_SCHEDULE
+                    value: "{{ normalization_batch_schedule }}"
                 envFrom:
                   - configMapRef:
                       name: "api-config"

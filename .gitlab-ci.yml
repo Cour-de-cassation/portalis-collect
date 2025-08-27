@@ -3,13 +3,16 @@ services:
   - docker:20.10.22-dind
 
 variables:
-  api_docker_image: '$CI_REGISTRY/cour-de-cassation/portalis-collect:$CI_COMMIT_SHORT_SHA'
+  api_docker_image: '$CI_REGISTRY/cour-de-cassation/portalis-collect/api:$CI_COMMIT_SHORT_SHA'
+  batch_docker_image: '$CI_REGISTRY/cour-de-cassation/portalis-collect/batch:$CI_COMMIT_SHORT_SHA'
 
 stages:
   - build
   - deploy
 
-build_and_push_api:
+# JOBS TEMPLATES
+
+.build_and_push_template:
   stage: build
   variables:
     HTTP_PROXY: $HTTP_PROXY_DEV
@@ -19,16 +22,16 @@ build_and_push_api:
 
     # To avoid rebuild existing image when addind tag to a commit
     - |
-      if docker pull "$api_docker_image"; then
-        echo "Docker image $api_docker_image already exist, skiping build and push."
+      if docker pull "$DOCKER_IMAGE_NAME"; then
+        echo "Docker image $DOCKER_IMAGE_NAME already exist, skiping build and push."
         exit 0
       fi
-
     - docker build
       --build-arg http_proxy=$HTTP_PROXY
       --build-arg https_proxy=$HTTPS_PROXY
-      -t $api_docker_image .
-    - docker push $api_docker_image
+      --target $TARGET
+      -t $DOCKER_IMAGE_NAME .
+    - docker push $DOCKER_IMAGE_NAME
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_TAG'
@@ -45,10 +48,29 @@ build_and_push_api:
     - cat "$KNOWN_HOSTS" > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
-    - ansible-playbook -e portalis_image=$api_docker_image -i ansible/inventory/$ENV.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
+    - ansible-playbook -e portalis_api_image=$api_docker_image -e portalis_batch_image=$batch_docker_image -i ansible/inventory/$ENV.yml ansible/deploy_juritj.yml --vault-password-file=$ANSIBLE_VAULT_PASS
+  needs:
+    - build_and_push_api
+    - build_and_push_batch
   tags:
     - docker
 
+
+# JOBS INSTANCES
+## BUILD AND PUSH
+build_and_push_api:
+  variables:
+    DOCKER_IMAGE_NAME: $api_docker_image
+    TARGET: api
+  extends: .build_and_push_template
+
+build_and_push_batch:
+  variables:
+    DOCKER_IMAGE_NAME: $batch_docker_image
+    TARGET: batch
+  extends: .build_and_push_template
+
+## DEPLOY
 deploy_dev:
   variables:
     ENV: dev

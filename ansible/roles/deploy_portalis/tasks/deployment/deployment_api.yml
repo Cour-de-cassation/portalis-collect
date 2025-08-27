@@ -1,0 +1,39 @@
+---
+- name: Create api Deployment
+  k8s:
+    apply: true
+    state: present
+    verify_ssl: true
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: "{{ api_id }}-deployment"
+        namespace: "{{ portalis_namespace }}"
+        labels:
+          app:
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: "{{ api_id }}"
+        template:
+          metadata:
+            labels:
+              app: "{{ api_id }}"
+          spec:
+            containers:
+              - name: "{{ api_id }}"
+                image: "{{ portalis_api_image }}"
+                ports:
+                  - containerPort: 3015
+                envFrom:
+                  - configMapRef:
+                      name: "api-config"
+                  - secretRef:
+                      name: "api-secret"
+                  - configMapRef:
+                      name: "s3-config"
+                  - secretRef:
+                      name: "s3-secret"
+...
