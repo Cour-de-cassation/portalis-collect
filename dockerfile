@@ -9,7 +9,7 @@ RUN npm ci
 COPY --chown=node:node . .
 RUN npm run build
 
-FROM node:23-alpine
+FROM node:23-alpine AS prod
 
 WORKDIR /home/node
 
@@ -20,4 +20,9 @@ RUN npm ci --omit=dev
 
 USER node
 
+FROM prod AS api
+
 CMD ["node", "dist/server.js"]
+
+FROM prod AS batch
+CMD ["node", "dist/batch.js"]
