@@ -48,7 +48,7 @@ stages:
     - cat "$KNOWN_HOSTS" > /root/.ssh/known_hosts
     - chmod 600 /root/.ssh/id_rsa
     - chmod 600 /root/.ssh/known_hosts
-    - ansible-playbook -e portalis_api_image=$api_docker_image -e portalis_batch_image=$batch_docker_image -i ansible/inventory/$ENV.yml ansible/deploy_juritj.yml --vault-password-file=$ANSIBLE_VAULT_PASS
+    - ansible-playbook -e portalis_api_image=$api_docker_image -e portalis_batch_image=$batch_docker_image -i ansible/inventory/$ENV.yml ansible/deploy_portalis.yml --vault-password-file=$ANSIBLE_VAULT_PASS
   needs:
     - build_and_push_api
     - build_and_push_batch
