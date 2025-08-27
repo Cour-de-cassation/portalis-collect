@@ -21,3 +21,5 @@ dbsder_api_url: "http://{{ api_service }}.dbsder:3000"
 authentication_id: "admin.portalis"
 
 node_env: "production"
+
+normalization_batch_schedule: "* * * * *"
