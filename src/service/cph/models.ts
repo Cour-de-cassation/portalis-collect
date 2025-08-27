@@ -49,7 +49,7 @@ const schemaCphMetadatas = zod.object({
         }),
       })
     ),
-  }),
+  }).optional(),
   decision: zod.object({
     date: zod.string().regex(/\d{8}/),
     codes_decision: zod.object({
@@ -152,7 +152,7 @@ export function mapCphDecision(
       motivationOccultation: false,
     },
     recommandationOccultation,
-    formation: metadatas.audiences_dossier.audience_dossier.find(
+    formation: (metadatas.audiences_dossier?.audience_dossier ?? []).find(
       (_) => _.chronologie === "COURANTE"
     )?.formation,
     parties: [], // TODO: which value ? - low

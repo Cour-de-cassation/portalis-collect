@@ -8,7 +8,7 @@ export const errorHandler = (err: Error, req: Request, res: Response, _: NextFun
     switch (err.type) {
       case 'notSupported':
         res.status(400)
-        res.send({ message: err.message, explain: err.explain ?? null })
+        res.send({ message: err.message })
         return
       case 'missingValue':
         res.status(400)

@@ -1,6 +1,6 @@
-import { MongoClient, Filter } from "mongodb"
+import { MongoClient, Filter, FindCursor, WithId, ObjectId } from "mongodb"
 import { FILE_DB_URL, S3_BUCKET_NAME } from "./env"
-import { FileInformation } from "../service/file/models"
+import { FileInformation } from "../service/rawDecision/models"
 
 const client = new MongoClient(FILE_DB_URL)
 
@@ -30,8 +30,22 @@ export async function updateFileInformation<T>(
         .findOneAndUpdate({ _id: id }, { $set: { events } }, { returnDocument: "after" })
 }
 
-export async function findFileInformations<T>(filters: Filter<FileInformation<T>>): Promise<FileInformation<T>[]> {
+export async function findFileInformations<T>(filters: Filter<FileInformation<T>>): Promise<FindCursor<FileInformation<T>>> {
     const db = await dbConnect()
-    // Todo: check pagination or streaming to avoid a RAM overflow on empty filters
-    return db.collection<FileInformation<T>>(S3_BUCKET_NAME).find(filters).toArray()
+    return db.collection<FileInformation<T>>(S3_BUCKET_NAME).find(filters)
+}
+
+export async function findFileInformationsList<T>(
+    filters: Filter<FileInformation<T>>,
+    cursor: string | undefined,
+    limit = 100
+): Promise<FileInformation<T>[]> {
+    const db = await dbConnect()
+    const filtersWithPagination = cursor ? { _id: { $gt: new ObjectId(cursor) }, ...filters } : filters
+
+    return db.collection<FileInformation<T>>(S3_BUCKET_NAME)
+        .find(filtersWithPagination)
+        .sort({ _id: 1 })
+        .limit(limit)
+        .toArray()
 }
