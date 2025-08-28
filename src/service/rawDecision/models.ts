@@ -31,4 +31,4 @@ export type PortalisFileInformation = FileInformation<PublicationRules>
 
 
 const utcDateSchema = z.iso.date().transform((val) => new Date(val));
-export const parseStatusDecisionQuery = z.object({ collected_date: utcDateSchema, from_id: z.string().optional() }).safeParse
+export const parseStatusDecisionQuery = z.object({ from_date: utcDateSchema, from_id: z.string().optional() }).safeParse
