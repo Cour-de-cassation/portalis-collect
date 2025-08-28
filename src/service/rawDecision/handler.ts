@@ -56,8 +56,10 @@ export async function addBlockToRawDecision<T>(file: FileInformation<T>, error: 
     return updateEventRawDecision(file, { type: "blocked", date, reason: `${error}` })
 }
 
-export async function getRawDecisionNotNormalized<T>(): Promise<{ length: () => number, next: () => Promise<FileInformation<T> | null> }> {
-    const filter = { 
+export async function getRawDecisionNotNormalized<T>(
+    defaultFilter?: Parameters<typeof findFileInformations<T>>[0]
+): Promise<{ length: () => number, next: () => Promise<FileInformation<T> | null> }> {
+    const filter = defaultFilter ?? { 
         events: { $not: { $elemMatch: { type: "normalized" } } },
         $expr: { $not: { $eq: [
             3,

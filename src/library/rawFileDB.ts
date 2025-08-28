@@ -54,3 +54,8 @@ export async function findFileInformationsList<T>(
         .limit(limit)
         .toArray()
 }
+
+export async function disconnect() {
+    await dbConnect()
+    return client.close()
+}

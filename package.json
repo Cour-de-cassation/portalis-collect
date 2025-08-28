@@ -7,7 +7,7 @@
   "license": "ISC",
   "scripts": {
     "start:api:docker": "docker compose up -d",
-    "start:batch:docker": "docker compose run --rm portalis-collect npm run start:batch:watch",
+    "start:normalization:docker": "docker compose run --rm portalis-collect npx ts-node src/scripts/startNormalization.ts",
     "start:api:watch": "nodemon --watch 'src/**' --ext 'ts,json' --exec 'npx ts-node src/server.ts'",
     "start:batch:watch": "npx ts-node src/batch.ts",
     "build": "tsc --build"

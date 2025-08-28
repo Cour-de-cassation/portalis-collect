@@ -109,8 +109,10 @@ async function updateRawDecisionsStatus(result: NormalizationResult) {
   }
 }
 
-export async function normalizeRawCphFiles(): Promise<void> {
-  const rawCphList = await getRawDecisionNotNormalized<PortalisFileInformation["metadatas"]>()
+export async function normalizeRawCphFiles(
+  defaultFilter?: Parameters<typeof getRawDecisionNotNormalized<PortalisFileInformation["metadatas"]>>[0]
+) {
+  const rawCphList = await getRawDecisionNotNormalized<PortalisFileInformation["metadatas"]>(defaultFilter)
   logNormalizationInputs(rawCphList.length())
 
   const results = await traverseRawCph(rawCphList, normalizeRawCph)
