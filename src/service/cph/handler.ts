@@ -22,7 +22,8 @@ import {
   logNormalisationIdentification, 
   logNormalisationSuccess, 
   logNormalizationInputs, 
-  logNormalizationResults 
+  logNormalizationResults, 
+  logRawDecisionsNotSaved
 } from "./logger";
 
 function searchXml(
@@ -105,7 +106,8 @@ async function updateRawDecisionsStatus(result: NormalizationResult) {
     if (result.status === "success") return addNormalizeToRawDecision(result.rawCph)
     return addBlockToRawDecision(result.rawCph, result.error)
   } catch (err) {
-
+    const error = err instanceof Error ? err : new UnexpectedError(`Unexpected error: ${err}`)
+    logRawDecisionsNotSaved(result, error)
   }
 }
 

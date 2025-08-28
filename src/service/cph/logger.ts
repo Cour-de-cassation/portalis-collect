@@ -1,5 +1,6 @@
 import { logger } from "../../library/logger";
 import { PortalisFileInformation } from "../rawDecision/models";
+import { NormalizationResult } from "./models";
 
 export function logAttachmentError(attachmentId: number, error: Error) {
     logger.error({
@@ -40,6 +41,13 @@ export function logNormalisationError(rawCph: PortalisFileInformation, error: Er
     logger.error({
         operationName: "normalizeRawCphFiles",
         msg: `${rawCph._id} failed to normalize due ${error.message}`,
+    })
+}
+
+export function logRawDecisionsNotSaved(result: NormalizationResult, err: Error) {
+    logger.error({
+        operationName: "updateRawDecisionsStatus",
+        msg: `${result.rawCph._id} has been treated with a status: ${result.status} but has not be saved in rawFiles due: ${err} `,
     })
 }
 
