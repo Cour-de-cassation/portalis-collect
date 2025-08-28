@@ -68,8 +68,8 @@ app.get("/decisions/status", async (req, res, next) => {
     const maybeQuery = parseStatusDecisionQuery(req.query)
     if(maybeQuery.error) throw toNotSupported("req.query", req.query, maybeQuery.error)
 
-    const { collected_date: collectedDate, from_id: fromId } = maybeQuery.data
-    const decisionsStatus = await getRawDecisionStatus(collectedDate, fromId)
+    const { from_date: fromDate, from_id: fromId } = maybeQuery.data
+    const decisionsStatus = await getRawDecisionStatus(fromDate, fromId)
     res.send(decisionsStatus)
   } catch(err: unknown) {
     next(err);
