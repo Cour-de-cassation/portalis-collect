@@ -1,5 +1,5 @@
 import { S3_BUCKET_NAME as MongoCollection } from "../../library/env";
-import { createFileInformation, updateFileInformation, findFileInformations, findFileInformationsList } from "../../library/rawFileDB";
+import { createFileInformation, updateFileInformation, findFileInformations, findFileInformationsList, countFileInformations } from "../../library/rawFileDB";
 import { saveFile } from "../../library/fileRepository";
 import { v4 as uuid } from "uuid";
 import { FileInformation, Event, Created } from "./models";
@@ -46,18 +46,31 @@ async function updateEventRawDecision<T>(file: FileInformation<T>, event: Exclud
     }
 }
 
-export async function normalizeRawDecision<T>(file: FileInformation<T>): Promise<FileInformation<T>> {
+export async function addNormalizeToRawDecision<T>(file: FileInformation<T>): Promise<FileInformation<T>> {
     const date = new Date()
     return updateEventRawDecision(file, { type: "normalized", date })
 }
 
-export async function blockRawDecision<T>(file: FileInformation<T>, error: Error): Promise<FileInformation<T>> {
+export async function addBlockToRawDecision<T>(file: FileInformation<T>, error: Error): Promise<FileInformation<T>> {
     const date = new Date()
     return updateEventRawDecision(file, { type: "blocked", date, reason: `${error}` })
 }
 
-export async function getRawDecisionNotNormalized<T>(): Promise<{ next: () => Promise<FileInformation<T> | null> }> {
-    return await findFileInformations<T>({ events: { $not: { $elemMatch: { type: "normalized" } } } })
+export async function getRawDecisionNotNormalized<T>(): Promise<{ length: () => number, next: () => Promise<FileInformation<T> | null> }> {
+    const filter = { 
+        events: { $not: { $elemMatch: { type: "normalized" } } },
+        $expr: { $not: { $eq: [
+            3,
+            { $size: { $filter: {
+                input: { $slice: ["$events", -3] },
+                as: "e",
+                cond: { $eq: ["$$e.type", "blocked"] }
+            }}}
+        ]}}
+    }
+    const cursor = await findFileInformations<T>(filter)
+    const count = await countFileInformations(filter)
+    return Object.assign(cursor, { length: () => count })
 }
 
 export async function getRawDecisionStatus<T>(fromDate: Date, fromId?: string) {

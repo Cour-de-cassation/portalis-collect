@@ -7,6 +7,7 @@ import {
   SuiviOccultation,
   CodeNac,
 } from "dbsder-api-types";
+import { PortalisFileInformation } from "../rawDecision/models";
 
 const schemaPublicationRules = zod.object({
   identifiantDecision: zod.string().trim().min(1),
@@ -170,3 +171,16 @@ export function mapCphDecision(
     filenameSource,
   };
 }
+
+export type NormalizationSucess = {
+  rawCph: PortalisFileInformation
+  status: "success"
+}
+
+export type NormalizationError = {
+  rawCph: PortalisFileInformation
+  status: "error"
+  error: Error
+}
+
+export type NormalizationResult = NormalizationError | NormalizationSucess

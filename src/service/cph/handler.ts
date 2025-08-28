@@ -3,17 +3,27 @@ import {
   getFileByName,
 } from "../../library/fileRepository";
 import { extractAttachments, pdfToHtml } from "../../library/pdf";
-import { logger } from "../../library/logger";
 import {
   CphMetadatas,
   mapCphDecision,
+  NormalizationResult,
   parseCphMetadatas,
 } from "./models";
 import { getCodeNac, sendToSder } from "../../library/decisionDB";
-import { blockRawDecision, normalizeRawDecision, getRawDecisionNotNormalized } from "../rawDecision/handler";
+import { addBlockToRawDecision, addNormalizeToRawDecision, getRawDecisionNotNormalized } from "../rawDecision/handler";
 import { PortalisFileInformation } from "../rawDecision/models";
 import { parseXml } from "../../library/xml";
 import { htmlToPlainText } from "../../library/html";
+import { 
+  logAttachmentError, 
+  logExtractionEnd, 
+  logExtractionStart, 
+  logNormalisationError, 
+  logNormalisationIdentification, 
+  logNormalisationSuccess, 
+  logNormalizationInputs, 
+  logNormalizationResults 
+} from "./logger";
 
 function searchXml(
   attachments: { name: string; data: Buffer; }[]
@@ -23,10 +33,8 @@ function searchXml(
       const xml = parseXml(attachment)
       return acc ?? xml
     } catch (err) {
-      logger.error({
-        operationName: "searchMetadatas",
-        msg: `Error on attachment ${index + 1}:\n` + (err instanceof Error ? err.message : (new UnexpectedError(`${err}`)).message)
-      })
+      const error = err instanceof Error ? err : new UnexpectedError(`${err}`)
+      logAttachmentError(index + 1, error)
       return acc
     }
   }, undefined)
@@ -47,17 +55,18 @@ async function getCphContent(
   fileNamePdf: string,
   cphFile: Buffer
 ): Promise<string> {
-  logger.info({ message: "Waiting for text extraction" })
+  logExtractionStart()
   const html = await pdfToHtml(fileNamePdf, cphFile);
-  logger.info({ message: "Text successfully extracted" })
+  logExtractionEnd()
   return htmlToPlainText(html);
 }
 
-async function normalizeRawCphFile(fileInformation: PortalisFileInformation, cphFile: Buffer) {
+async function normalizeRawCph(rawCph: PortalisFileInformation): Promise<unknown> {
+  const cphFile = await getFileByName(rawCph.path);
   const cphMetadatas = await getCphMetadatas(cphFile);
-  const cphPseudoCustomRules = fileInformation.metadatas;
+  const cphPseudoCustomRules = rawCph.metadatas;
   const codeNac = await getCodeNac(cphMetadatas.dossier.nature_affaire_civile.code)
-  const cphContent = await getCphContent(fileInformation.path, cphFile);
+  const cphContent = await getCphContent(rawCph.path, cphFile);
 
   if (!codeNac) throw new NotFound("codeNac", `codeNac ${cphMetadatas.dossier.nature_affaire_civile.code} not found`)
 
@@ -66,36 +75,49 @@ async function normalizeRawCphFile(fileInformation: PortalisFileInformation, cph
     cphContent,
     cphPseudoCustomRules,
     codeNac,
-    fileInformation.path
+    rawCph.path
   );
 
-  await sendToSder(cphDecision);
-
-  return normalizeRawDecision(fileInformation);
+  return sendToSder(cphDecision);
 }
 
-async function onRawCph(cursorRawCph: { next: () => Promise<PortalisFileInformation | null> }): Promise<void> {
+async function traverseRawCph(
+  cursorRawCph: { next: () => Promise<PortalisFileInformation | null> },
+  normalizeCph: (rawCph: PortalisFileInformation) => Promise<unknown>
+): Promise<NormalizationResult[]> {
   const rawCph = await cursorRawCph.next()
-  if (!rawCph) return Promise.resolve()
+  if (!rawCph) return Promise.resolve([])
+  logNormalisationIdentification(rawCph)
 
-    try {
-    logger.info({
-      operationName: "normalizeRawCphFiles",
-      msg: `normalize ${rawCph._id} - ${rawCph.path}`,
-    });
-    const file = await getFileByName(rawCph.path);
-    await normalizeRawCphFile(rawCph, file);
-    logger.info({ operationName: "normalizeRawCphFiles", msg: `${rawCph._id} normalized with success` })
+  try {
+    await normalizeCph(rawCph);
+    logNormalisationSuccess(rawCph)
+    return [{ rawCph, status: "success" }, ...(await traverseRawCph(cursorRawCph, normalizeCph))]
   } catch (err) {
     const error = err instanceof Error ? err : new UnexpectedError(`Unexpected error: ${err}`)
-    await blockRawDecision(rawCph, error)
-    logger.error({ msg: error.message })
-  } finally {
-    await onRawCph(cursorRawCph)
+    logNormalisationError(rawCph, error)
+    return [{ rawCph, status: "error", error }, ...(await traverseRawCph(cursorRawCph, normalizeCph))]
   }
 }
 
-export async function normalizeRawCphFiles(): Promise<unknown> {
+async function updateRawDecisionsStatus(result: NormalizationResult) {
+  try {
+    if (result.status === "success") return addNormalizeToRawDecision(result.rawCph)
+    return addBlockToRawDecision(result.rawCph, result.error)
+  } catch (err) {
+
+  }
+}
+
+export async function normalizeRawCphFiles(): Promise<void> {
   const rawCphList = await getRawDecisionNotNormalized<PortalisFileInformation["metadatas"]>()
-  return onRawCph(rawCphList)
+  logNormalizationInputs(rawCphList.length())
+
+  const results = await traverseRawCph(rawCphList, normalizeRawCph)
+  await Promise.all(results.map(updateRawDecisionsStatus))
+
+  logNormalizationResults(
+    results.filter(({ status }) => status === "success").length,
+    results.filter(({ status }) => status === "error").length
+  )
 }

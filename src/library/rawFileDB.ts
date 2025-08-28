@@ -30,6 +30,11 @@ export async function updateFileInformation<T>(
         .findOneAndUpdate({ _id: id }, { $set: { events } }, { returnDocument: "after" })
 }
 
+export async function countFileInformations<T>(filters: Filter<FileInformation<T>>): Promise<number> {
+    const db = await dbConnect()
+    return db.collection<FileInformation<T>>(S3_BUCKET_NAME).countDocuments(filters)
+}
+
 export async function findFileInformations<T>(filters: Filter<FileInformation<T>>): Promise<FindCursor<FileInformation<T>>> {
     const db = await dbConnect()
     return db.collection<FileInformation<T>>(S3_BUCKET_NAME).find(filters)
