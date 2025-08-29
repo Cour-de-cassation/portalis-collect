@@ -1,52 +1,32 @@
 import { logger } from "../../library/logger";
-import { PortalisFileInformation } from "../rawDecision/models";
-import { NormalizationResult } from "./models";
+import { NormalizationResult, RawCph } from "./models";
 
-export function logAttachmentError(attachmentId: number, error: Error) {
-    logger.error({
-            operationName: "searchMetadatas",
-            msg: `Error on attachment ${attachmentId}:\n${error}`
-          })
-}
 
-export function logExtractionStart() {
-    logger.info({
-        operationName: "getCphContent",
-        msg: "Waiting for text extraction"
-    })
-}
 
-export function logExtractionEnd() {
-    logger.info({
-        operationName: "getCphContent",
-        msg: "Text successfully extracted"
-    })
-}
-
-export function logNormalisationIdentification(rawCph: PortalisFileInformation): void {
+export function logNormalisationIdentification(rawCph: RawCph): void {
     logger.info({
         operationName: "normalizeRawCphFiles",
         msg: `normalize ${rawCph._id} - ${rawCph.path}`,
     });
 }
 
-export function logNormalisationSuccess(rawCph: PortalisFileInformation): void {
+export function logNormalisationSuccess(rawCph: RawCph): void {
     logger.info({
         operationName: "normalizeRawCphFiles",
         msg: `${rawCph._id} normalized with success`
     })
 }
 
-export function logNormalisationError(rawCph: PortalisFileInformation, error: Error): void {
+export function logNormalisationError(rawCph: RawCph, error: Error): void {
     logger.error({
         operationName: "normalizeRawCphFiles",
         msg: `${rawCph._id} failed to normalize due ${error.message}`,
     })
 }
 
-export function logRawDecisionsNotSaved(result: NormalizationResult, err: Error) {
+export function logRawCpNotSaved(result: NormalizationResult, err: Error) {
     logger.error({
-        operationName: "updateRawDecisionsStatus",
+        operationName: "updateRawCphStatus",
         msg: `${result.rawCph._id} has been treated with a status: ${result.status} but has not be saved in rawFiles due: ${err} `,
     })
 }

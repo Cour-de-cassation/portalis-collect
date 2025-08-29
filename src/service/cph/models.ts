@@ -7,7 +7,13 @@ import {
   SuiviOccultation,
   CodeNac,
 } from "dbsder-api-types";
-import { PortalisFileInformation } from "../rawDecision/models";
+import { Id } from "../../library/DbRawFile";
+
+export type FileCph = {
+    mimetype: string;
+    size: number;
+    buffer: Buffer;
+};
 
 const schemaPublicationRules = zod.object({
   identifiantDecision: zod.string().trim().min(1),
@@ -172,15 +178,46 @@ export function mapCphDecision(
   };
 }
 
+export type Created = {
+    type: "created",
+    date: Date
+}
+
+export type Normalized = {
+    type: "normalized",
+    date: Date
+}
+
+export type Blocked = {
+    type: "blocked",
+    date: Date,
+    reason: string
+}
+
+export type Event = (Created | Normalized | Blocked)
+
+export type RawCph = {
+    _id: Id,
+    path: string,
+    events: [Created, ...Event[]]
+    metadatas: PublicationRules
+}
+
 export type NormalizationSucess = {
-  rawCph: PortalisFileInformation
+  rawCph: RawCph
   status: "success"
 }
 
 export type NormalizationError = {
-  rawCph: PortalisFileInformation
+  rawCph: RawCph
   status: "error"
   error: Error
 }
 
 export type NormalizationResult = NormalizationError | NormalizationSucess
+
+const utcDateSchema = zod.iso.date().transform((val) => new Date(val));
+export const parseStatusQuery = zod.object({ 
+  from_date: utcDateSchema, 
+  from_id: zod.string().optional() 
+}).safeParse
