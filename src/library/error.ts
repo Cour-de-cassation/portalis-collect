@@ -70,7 +70,9 @@ export class UnexpectedError extends Error {
     super(_message)
   }
 }
-export function toUnexpectedError(error: Error) {
+export function toUnexpectedError(error: any) {
+  if (!(error instanceof Error)) return new UnexpectedError(`${error}`)
+
   const unexpected = new UnexpectedError()
   if (error.message?.length > 0) unexpected.message = error.message
   if ((error.stack?.length ?? 0) > 0) unexpected.stack = error.stack

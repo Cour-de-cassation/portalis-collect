@@ -1,9 +1,8 @@
 import { Router } from "express";
 import multer from "multer";
 import { MissingValue, NotSupported, toNotSupported } from "../library/error";
-import { parsePublicationRules } from "../service/cph/models";
-import { createRawDecision, getRawDecisionStatus } from "../service/rawDecision/handler";
-import { parseStatusDecisionQuery } from "../service/rawDecision/models";
+import { parsePublicationRules, parseStatusQuery } from "../service/cph/models";
+import { createRawCph, getRawCphStatus } from "../service/cph/handler";
 
 export const FILE_FIELD = "fichierDecisionIntegre";
 export const BODY_FIELD = "openDataProperties";
@@ -56,7 +55,7 @@ app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
   try {
     const file = parseFile(req.file);
     const body = parseBody(req.body[BODY_FIELD]);
-    const { _id } = await createRawDecision(file, body);
+    const { _id } = await createRawCph(file, body);
     res.send({ id: _id, message: `Your file has been saved at id ${_id}.` });
   } catch (err: unknown) {
     next(err);
@@ -65,11 +64,11 @@ app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
 
 app.get("/decisions/status", async (req, res, next) => {
   try {
-    const maybeQuery = parseStatusDecisionQuery(req.query)
+    const maybeQuery = parseStatusQuery(req.query)
     if(maybeQuery.error) throw toNotSupported("req.query", req.query, maybeQuery.error)
 
-    const { collected_date: collectedDate, from_id: fromId } = maybeQuery.data
-    const decisionsStatus = await getRawDecisionStatus(collectedDate, fromId)
+    const { from_date: fromDate, from_id: fromId } = maybeQuery.data
+    const decisionsStatus = await getRawCphStatus(fromDate, fromId)
     res.send(decisionsStatus)
   } catch(err: unknown) {
     next(err);

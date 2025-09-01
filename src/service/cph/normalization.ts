@@ -1,0 +1,107 @@
+import { getFileByName } from "../../library/bucket";
+import { getCodeNac, sendToSder } from "../../library/DbSder";
+import { NotFound, UnexpectedError } from "../../library/error";
+import { htmlToPlainText } from "../../library/formats/html";
+import { extractAttachments, pdfToHtml } from "../../library/formats/pdf";
+import { parseXml } from "../../library/formats/xml";
+import { logger } from "../../library/logger";
+import { CphMetadatas, mapCphDecision, parseCphMetadatas, RawCph } from "./models";
+
+function logAttachmentError(attachmentId: number, error: Error) {
+  logger.error({
+    operationName: "searchXml",
+    msg: `Error on attachment ${attachmentId}:\n${error}`
+  })
+}
+
+function searchXml(
+  attachments: { name: string; data: Buffer; }[]
+): unknown {
+  const attachment = attachments.reduce<CphMetadatas | undefined>((acc, attachment, index) => {
+    try {
+      const xml = parseXml(attachment)
+      return acc ?? xml
+    } catch (err) {
+      const error = err instanceof Error ? err : new UnexpectedError(`${err}`)
+      logAttachmentError(index + 1, error)
+      return acc
+    }
+  }, undefined)
+
+  if (!attachment) throw new NotFound("attachement", "Xml metadatas attachement not found or bad formatted")
+  return attachment
+}
+
+async function getCphMetadatas(
+  cphFile: Buffer
+): Promise<CphMetadatas> {
+  const attachments = await extractAttachments(cphFile);
+  const xml = searchXml(attachments)
+  return parseCphMetadatas(xml).root.document
+}
+
+function logExtractionStart() {
+  logger.info({
+    operationName: "getCphContent",
+    msg: "Waiting for text extraction"
+  })
+}
+
+function logExtractionEnd() {
+  logger.info({
+    operationName: "getCphContent",
+    msg: "Text successfully extracted"
+  })
+}
+
+async function getCphContent(
+  fileNamePdf: string,
+  cphFile: Buffer
+): Promise<string> {
+  logExtractionStart()
+  const html = await pdfToHtml(fileNamePdf, cphFile);
+  logExtractionEnd()
+  return htmlToPlainText(html);
+}
+
+export async function normalizeCph(rawCph: RawCph): Promise<unknown> {
+  const cphFile = await getFileByName(rawCph.path);
+  const cphMetadatas = await getCphMetadatas(cphFile);
+  const cphPseudoCustomRules = rawCph.metadatas;
+  const codeNac = await getCodeNac(cphMetadatas.dossier.nature_affaire_civile.code)
+  const cphContent = await getCphContent(rawCph.path, cphFile);
+
+  if (!codeNac) throw new NotFound("codeNac", `codeNac ${cphMetadatas.dossier.nature_affaire_civile.code} not found`)
+
+  const cphDecision = mapCphDecision(
+    cphMetadatas,
+    cphContent,
+    cphPseudoCustomRules,
+    codeNac,
+    rawCph.path
+  );
+
+  return sendToSder(cphDecision);
+}
+
+export const rawCphToNormalize = {
+  // Ne contient pas normalized:
+  events: { $not: { $elemMatch: { type: "normalized" } } },
+  // Les 3 derniers events ne sont pas "blocked":
+  $expr: {
+    $not: {
+      $eq: [
+        3,
+        {
+          $size: {
+            $filter: {
+              input: { $slice: ["$events", -3] },
+              as: "e",
+              cond: { $eq: ["$$e.type", "blocked"] }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

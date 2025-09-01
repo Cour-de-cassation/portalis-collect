@@ -7,7 +7,13 @@ import {
   SuiviOccultation,
   CodeNac,
 } from "dbsder-api-types";
-import { PortalisFileInformation } from "../rawDecision/models";
+import { Id } from "../../library/DbRawFile";
+
+export type FileCph = {
+    mimetype: string;
+    size: number;
+    buffer: Buffer;
+};
 
 const schemaPublicationRules = zod.object({
   identifiantDecision: zod.string().trim().min(1),
@@ -36,18 +42,8 @@ const schemaCphMetadatas = zod.object({
   audiences_dossier: zod.object({
     audience_dossier: zod.array(
       zod.object({
-        formation: zod.string(),
-        chronologie: zod.string(),
-        composition: zod.object({
-          membre_composition: zod.array(
-            zod.object({
-              role: zod.string(),
-              nom: zod.string(),
-              prenom: zod.string(),
-              college: zod.string(),
-            })
-          ),
-        }),
+        formation: zod.string().optional(),
+        chronologie: zod.string().optional(),
       })
     ),
   }).optional(),
@@ -145,7 +141,7 @@ export function mapCphDecision(
     selection: publicationRules.interetParticulier,
     sommaire: publicationRules.sommaireInteretParticulier,
     blocOccultation: codeNac.blocOccultationCA,
-    occultation: {
+    occultation: { 
       additionalTerms: computeAdditionalTerms(
         publicationRules.recommandationOccultation
       ),
@@ -172,15 +168,46 @@ export function mapCphDecision(
   };
 }
 
+export type Created = {
+    type: "created",
+    date: Date
+}
+
+export type Normalized = {
+    type: "normalized",
+    date: Date
+}
+
+export type Blocked = {
+    type: "blocked",
+    date: Date,
+    reason: string
+}
+
+export type Event = (Created | Normalized | Blocked)
+
+export type RawCph = {
+    _id: Id,
+    path: string,
+    events: [Created, ...Event[]]
+    metadatas: PublicationRules
+}
+
 export type NormalizationSucess = {
-  rawCph: PortalisFileInformation
+  rawCph: RawCph
   status: "success"
 }
 
 export type NormalizationError = {
-  rawCph: PortalisFileInformation
+  rawCph: RawCph
   status: "error"
   error: Error
 }
 
 export type NormalizationResult = NormalizationError | NormalizationSucess
+
+const utcDateSchema = zod.iso.date().transform((val) => new Date(val));
+export const parseStatusQuery = zod.object({ 
+  from_date: utcDateSchema, 
+  from_id: zod.string().optional() 
+}).safeParse

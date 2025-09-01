@@ -1,124 +1,117 @@
-import { NotFound, UnexpectedError } from "../../library/error";
+import { v4 as uuid } from "uuid";
+
+import { isMissingValue, toUnexpectedError, UnexpectedError } from "../../library/error";
 import {
-  getFileByName,
-} from "../../library/fileRepository";
-import { extractAttachments, pdfToHtml } from "../../library/pdf";
-import {
-  CphMetadatas,
-  mapCphDecision,
+  Created,
+  Event,
+  FileCph,
   NormalizationResult,
-  parseCphMetadatas,
+  RawCph,
 } from "./models";
-import { getCodeNac, sendToSder } from "../../library/decisionDB";
-import { addBlockToRawDecision, addNormalizeToRawDecision, getRawDecisionNotNormalized } from "../rawDecision/handler";
-import { PortalisFileInformation } from "../rawDecision/models";
-import { parseXml } from "../../library/xml";
-import { htmlToPlainText } from "../../library/html";
-import { 
-  logAttachmentError, 
-  logExtractionEnd, 
-  logExtractionStart, 
-  logNormalisationError, 
-  logNormalisationIdentification, 
-  logNormalisationSuccess, 
-  logNormalizationInputs, 
-  logNormalizationResults, 
-  logRawDecisionsNotSaved
-} from "./logger";
+import { countFileInformations, createFileInformation, findFileInformations, findFileInformationsList, mapCursorSync, updateFileInformation } from "../../library/DbRawFile";
+import { normalizeCph, rawCphToNormalize } from "./normalization";
+import { logNormalisationError, logNormalisationIdentification, logNormalisationSuccess, logNormalizationInputs, logNormalizationResults, logRawCpNotSaved } from "./logger";
+import { saveFile } from "../../library/bucket";
 
-function searchXml(
-  attachments: { name: string; data: Buffer; }[]
-): unknown {
-  const attachment = attachments.reduce<CphMetadatas | undefined>((acc, attachment, index) => {
-    try {
-      const xml = parseXml(attachment)
-      return acc ?? xml
-    } catch (err) {
-      const error = err instanceof Error ? err : new UnexpectedError(`${err}`)
-      logAttachmentError(index + 1, error)
-      return acc
-    }
-  }, undefined)
-
-  if (!attachment) throw new NotFound("attachement", "Xml metadatas attachement not found or bad formatted")
-  return attachment
-}
-
-async function getCphMetadatas(
-  cphFile: Buffer
-): Promise<CphMetadatas> {
-  const attachments = await extractAttachments(cphFile);
-  const xml = searchXml(attachments)
-  return parseCphMetadatas(xml).root.document
-}
-
-async function getCphContent(
-  fileNamePdf: string,
-  cphFile: Buffer
-): Promise<string> {
-  logExtractionStart()
-  const html = await pdfToHtml(fileNamePdf, cphFile);
-  logExtractionEnd()
-  return htmlToPlainText(html);
-}
-
-async function normalizeRawCph(rawCph: PortalisFileInformation): Promise<unknown> {
-  const cphFile = await getFileByName(rawCph.path);
-  const cphMetadatas = await getCphMetadatas(cphFile);
-  const cphPseudoCustomRules = rawCph.metadatas;
-  const codeNac = await getCodeNac(cphMetadatas.dossier.nature_affaire_civile.code)
-  const cphContent = await getCphContent(rawCph.path, cphFile);
-
-  if (!codeNac) throw new NotFound("codeNac", `codeNac ${cphMetadatas.dossier.nature_affaire_civile.code} not found`)
-
-  const cphDecision = mapCphDecision(
-    cphMetadatas,
-    cphContent,
-    cphPseudoCustomRules,
-    codeNac,
-    rawCph.path
-  );
-
-  return sendToSder(cphDecision);
-}
-
-async function traverseRawCph(
-  cursorRawCph: { next: () => Promise<PortalisFileInformation | null> },
-  normalizeCph: (rawCph: PortalisFileInformation) => Promise<unknown>
-): Promise<NormalizationResult[]> {
-  const rawCph = await cursorRawCph.next()
-  if (!rawCph) return Promise.resolve([])
-  logNormalisationIdentification(rawCph)
-
+async function updateEventRawCph(file: RawCph, event: Exclude<Event, Created>) {
   try {
-    await normalizeCph(rawCph);
-    logNormalisationSuccess(rawCph)
-    return [{ rawCph, status: "success" }, ...(await traverseRawCph(cursorRawCph, normalizeCph))]
+    const updated = await updateFileInformation<RawCph>(
+      file._id,
+      { events: [...file.events, event] }
+    )
+    if (!updated) throw new UnexpectedError(
+      `file with id ${file._id} is missing but normalized`
+    )
+    return updated
   } catch (err) {
-    const error = err instanceof Error ? err : new UnexpectedError(`Unexpected error: ${err}`)
-    logNormalisationError(rawCph, error)
-    return [{ rawCph, status: "error", error }, ...(await traverseRawCph(cursorRawCph, normalizeCph))]
+    if (isMissingValue(err)) throw err
+    throw err instanceof Error ? toUnexpectedError(err) : new UnexpectedError()
   }
 }
 
-async function updateRawDecisionsStatus(result: NormalizationResult) {
+async function updateRawCphStatus(result: NormalizationResult): Promise<unknown> {
+  const date = new Date()
   try {
-    if (result.status === "success") return addNormalizeToRawDecision(result.rawCph)
-    return addBlockToRawDecision(result.rawCph, result.error)
+    if (result.status === "success") return updateEventRawCph(
+      result.rawCph,
+      { type: "normalized", date }
+    )
+    return updateEventRawCph(
+      result.rawCph,
+      { type: "blocked", date, reason: `${result.error}` }
+    )
   } catch (err) {
-    const error = err instanceof Error ? err : new UnexpectedError(`Unexpected error: ${err}`)
-    logRawDecisionsNotSaved(result, error)
+    const error = toUnexpectedError(err)
+    logRawCpNotSaved(result, error)
   }
 }
+
+export async function createRawCph(
+  file: FileCph,
+  metadatas: RawCph["metadatas"]
+): Promise<RawCph> {
+  const date = new Date()
+  const path = `${uuid()}-${date.toISOString()}.pdf`;
+
+  try {
+    await saveFile(
+      path,
+      file.buffer,
+      "application/pdf"
+    )
+
+    return createFileInformation({
+      path,
+      metadatas,
+      events: [{ type: "created", date }]
+    })
+  } catch (err) {
+    throw err instanceof Error ? toUnexpectedError(err) : new UnexpectedError()
+  }
+}
+
+export async function getRawCphStatus(fromDate: Date, fromId?: string) {
+  const BATCH_SIZE = 100
+
+  const filter = { events: { $elemMatch: { type: "created", date: { $gte: fromDate } } } }
+  const files = await findFileInformationsList<RawCph>(filter, fromId, BATCH_SIZE + 1)
+  const cphStatus = files.slice(0, BATCH_SIZE).map(_ => ({
+    id: _._id,
+    originalId: _.metadatas.identifiantDecision,
+    created: _.events.find(_ => _.type === "created")?.date.toISOString(), // type safe due "created" cannot undefined
+    status: _.events.reverse()[0] as Event // type safe due to _events cannot empty
+  } 
+  ))
+
+  return {
+    cphList: cphStatus,
+    nextBatchId: files.length > BATCH_SIZE ? cphStatus[cphStatus.length - 1]?.id : null
+  }
+}
+
 
 export async function normalizeRawCphFiles(
-  defaultFilter?: Parameters<typeof getRawDecisionNotNormalized<PortalisFileInformation["metadatas"]>>[0]
+  defaultFilter?: Parameters<typeof findFileInformations<RawCph>>[0]
 ) {
-  const rawCphList = await getRawDecisionNotNormalized<PortalisFileInformation["metadatas"]>(defaultFilter)
-  logNormalizationInputs(rawCphList.length())
+  const _rawCphToNormalize = defaultFilter ?? rawCphToNormalize
+  const rawCphCursor = await findFileInformations<RawCph>(_rawCphToNormalize)
+  const rawCphLength = await countFileInformations<RawCph>(_rawCphToNormalize)
+  logNormalizationInputs(rawCphLength)
 
-  const results = await traverseRawCph(rawCphList, normalizeRawCph)
-  await Promise.all(results.map(updateRawDecisionsStatus))
+  const results: NormalizationResult[] = await mapCursorSync(rawCphCursor, async rawCph => {
+    try {
+      logNormalisationIdentification(rawCph)
+      await normalizeCph(rawCph)
+      logNormalisationSuccess(rawCph)
+      return { rawCph, status: "success" }
+    } catch (err) {
+      const error = toUnexpectedError(err)
+      logNormalisationError(rawCph, error)
+      return { rawCph, status: "error", error }
+    }
+  })
+
+  await Promise.all(results.map(updateRawCphStatus))
 
   logNormalizationResults(
     results.filter(({ status }) => status === "success").length,

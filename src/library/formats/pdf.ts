@@ -1,5 +1,5 @@
 import FormData from "form-data";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import {
   PDFDocument,
   PDFName,
@@ -11,7 +11,7 @@ import {
   PDFStream,
   decodePDFRawStream,
 } from "pdf-lib";
-import { NLP_PSEUDONYMISATION_API } from "./env";
+import { NLP_PSEUDONYMISATION_API } from "../env";
 
 const ROUTE_URL = `${NLP_PSEUDONYMISATION_API}/pdf-to-text`;
 
@@ -29,11 +29,22 @@ export async function pdfToHtml(
     filename: fileName,
     contentType: "application/pdf",
   });
-
-  const res = await axios.postForm<PdfToHtmlAnswer>(ROUTE_URL, form, {
-    headers: form.getHeaders(),
-  });
-  return res.data.HTMLText;
+  try {
+    const res = await axios.postForm<PdfToHtmlAnswer>(ROUTE_URL, form, {
+      headers: form.getHeaders(),
+    });
+    return res.data.HTMLText;
+  } catch (err) {
+    // NLP could be occupied and ask for waiting
+    if (err instanceof AxiosError && err.status === 429) {
+      const MINUTE = 1000 * 60
+      return new Promise((res, rej) => setTimeout(() =>
+        pdfToHtml(fileName, fileContent).then(res).catch(rej),
+        MINUTE
+      ))
+    }
+    throw err
+  }
 }
 
 function extractAttachmentsFromPdfLib(pdfDoc: PDFDocument) {
