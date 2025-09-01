@@ -42,18 +42,8 @@ const schemaCphMetadatas = zod.object({
   audiences_dossier: zod.object({
     audience_dossier: zod.array(
       zod.object({
-        formation: zod.string(),
-        chronologie: zod.string(),
-        composition: zod.object({
-          membre_composition: zod.array(
-            zod.object({
-              role: zod.string(),
-              nom: zod.string(),
-              prenom: zod.string(),
-              college: zod.string(),
-            })
-          ),
-        }),
+        formation: zod.string().optional(),
+        chronologie: zod.string().optional(),
       })
     ),
   }).optional(),
@@ -151,7 +141,7 @@ export function mapCphDecision(
     selection: publicationRules.interetParticulier,
     sommaire: publicationRules.sommaireInteretParticulier,
     blocOccultation: codeNac.blocOccultationCA,
-    occultation: {
+    occultation: { 
       additionalTerms: computeAdditionalTerms(
         publicationRules.recommandationOccultation
       ),
