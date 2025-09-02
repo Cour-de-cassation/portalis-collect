@@ -105,7 +105,7 @@ export function mapCphDecision(
   metadatas: CphMetadatas,
   content: string,
   publicationRules: PublicationRules,
-  codeNac: CodeNac,
+  occultationStrategy: Required<Pick<CodeNac, "blocOccultationCA" | "categoriesToOmitCA">>,
   filenameSource: string
 ): UnIdentifiedDecisionCph {
   const recommandationOccultation = publicationRules.recommandationOccultation
@@ -140,12 +140,12 @@ export function mapCphDecision(
     jurisdictionName: "", // TODO: which value ? - high
     selection: publicationRules.interetParticulier,
     sommaire: publicationRules.sommaireInteretParticulier,
-    blocOccultation: codeNac.blocOccultationCA,
+    blocOccultation: occultationStrategy.blocOccultationCA,
     occultation: { 
       additionalTerms: computeAdditionalTerms(
         publicationRules.recommandationOccultation
       ),
-      categoriesToOmit: codeNac.categoriesToOmitCA[recommandationOccultation],
+      categoriesToOmit: occultationStrategy.categoriesToOmitCA[recommandationOccultation],
       motivationOccultation: false,
     },
     recommandationOccultation,

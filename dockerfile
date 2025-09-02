@@ -1,5 +1,4 @@
-ARG NODE_VERSION=23
-FROM node:23-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /home/node
 
@@ -9,7 +8,7 @@ RUN npm ci
 COPY --chown=node:node . .
 RUN npm run build
 
-FROM node:23-alpine AS prod
+FROM node:24-alpine AS prod
 
 WORKDIR /home/node
 
