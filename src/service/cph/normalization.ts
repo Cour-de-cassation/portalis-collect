@@ -1,3 +1,4 @@
+import { CodeNac } from "dbsder-api-types";
 import { getFileByName } from "../../library/bucket";
 import { getCodeNac, sendToSder } from "../../library/DbSder";
 import { NotFound, UnexpectedError } from "../../library/error";
@@ -64,20 +65,29 @@ async function getCphContent(
   return htmlToPlainText(html);
 }
 
+async function getOccultationStrategy(code: string): Promise<Required<Pick<CodeNac, "blocOccultationCA" | "categoriesToOmitCA">>> {
+  const codeNac = await getCodeNac(code)
+  if (!codeNac) throw new NotFound("codeNac", `codeNac ${code} not found`)
+
+  const { blocOccultationCA, categoriesToOmitCA } = codeNac
+  if (!blocOccultationCA) throw new NotFound("codeNac.blocOccultationCA", `codeNac ${code} has no "blocOccultationCA" property`)
+  if (!categoriesToOmitCA) throw new NotFound("codeNac.categoriesToOmitCA", `codeNac ${code} has no "categoriesToOmitCA" property`)
+
+  return { blocOccultationCA, categoriesToOmitCA }
+}
+
 export async function normalizeCph(rawCph: RawCph): Promise<unknown> {
   const cphFile = await getFileByName(rawCph.path);
   const cphMetadatas = await getCphMetadatas(cphFile);
   const cphPseudoCustomRules = rawCph.metadatas;
-  const codeNac = await getCodeNac(cphMetadatas.dossier.nature_affaire_civile.code)
+  const occultationStrategy = await getOccultationStrategy(cphMetadatas.dossier.nature_affaire_civile.code)
   const cphContent = await getCphContent(rawCph.path, cphFile);
-
-  if (!codeNac) throw new NotFound("codeNac", `codeNac ${cphMetadatas.dossier.nature_affaire_civile.code} not found`)
 
   const cphDecision = mapCphDecision(
     cphMetadatas,
     cphContent,
     cphPseudoCustomRules,
-    codeNac,
+    occultationStrategy,
     rawCph.path
   );
 
