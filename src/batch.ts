@@ -10,10 +10,10 @@ async function startNormalization() {
   CronJob.from({
     cronTime: NORMALIZATION_BATCH_SCHEDULE ?? CRON_EVERY_HOUR,
     async onTick() {
-      logger.info({
-        operationName: "startNormalization",
-        msg: "Normalization starting",
-      });
+      logger.info(
+        "src/batch.ts",
+        ["normalization", "startNormalization"],
+      );
       await normalizeRawCphFiles()
     },
     waitForCompletion: true, // onTick cannot be retry if an instance of it is running

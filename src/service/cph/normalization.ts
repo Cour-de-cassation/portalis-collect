@@ -8,13 +8,6 @@ import { parseXml } from "../../library/formats/xml";
 import { logger } from "../../library/logger";
 import { CphMetadatas, mapCphDecision, parseCphMetadatas, RawCph } from "./models";
 
-function logAttachmentError(attachmentId: number, error: Error) {
-  logger.error({
-    operationName: "searchXml",
-    msg: `Error on attachment ${attachmentId}:\n${error}`
-  })
-}
-
 function searchXml(
   attachments: { name: string; data: Buffer; }[]
 ): unknown {
@@ -24,7 +17,9 @@ function searchXml(
       return acc ?? xml
     } catch (err) {
       const error = err instanceof Error ? err : new UnexpectedError(`${err}`)
-      logAttachmentError(index + 1, error)
+      logger.error("src/service/cph/normalization.ts", ["normalization", "searchXml"],
+        `Error on attachment ${index + 1}:\n${error}`
+      )
       return acc
     }
   }, undefined)
@@ -41,27 +36,17 @@ async function getCphMetadatas(
   return parseCphMetadatas(xml).root.document
 }
 
-function logExtractionStart() {
-  logger.info({
-    operationName: "getCphContent",
-    msg: "Waiting for text extraction"
-  })
-}
-
-function logExtractionEnd() {
-  logger.info({
-    operationName: "getCphContent",
-    msg: "Text successfully extracted"
-  })
-}
-
 async function getCphContent(
   fileNamePdf: string,
   cphFile: Buffer
 ): Promise<string> {
-  logExtractionStart()
+  logger.info("src/service/cph/normalization.ts", ["extraction", "getCphContent"],
+    "Waiting for text extraction"
+  )
   const html = await pdfToHtml(fileNamePdf, cphFile);
-  logExtractionEnd()
+  logger.info("src/service/cph/normalization.ts", ["extraction", "getCphContent"],
+    "Text successfully extracted"
+  )
   return htmlToPlainText(html);
 }
 

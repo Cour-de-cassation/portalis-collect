@@ -8,7 +8,7 @@ import authRoute from "./api/authentication";
 import { PORT } from "./library/env";
 
 const app: Express = express();
-  
+
 app
   .use(helmet())
   .use(loggerHttp)
@@ -17,8 +17,9 @@ app
   .use(errorHandler);
 
 app.listen(PORT, () => {
-  logger.info({
-    operationName: 'startServer',
-    msg: `PORTALIS-COLLECT running on port ${PORT}`
-  })
+  logger.info(
+    "src/server.ts",
+    ["collect", "startServer"],
+    `PORTALIS-COLLECT running on port ${PORT}`
+  );
 });

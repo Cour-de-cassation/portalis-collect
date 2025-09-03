@@ -10,8 +10,8 @@ import {
 } from "./models";
 import { countFileInformations, createFileInformation, findFileInformations, findFileInformationsList, mapCursorSync, updateFileInformation } from "../../library/DbRawFile";
 import { normalizeCph, rawCphToNormalize } from "./normalization";
-import { logNormalisationError, logNormalisationIdentification, logNormalisationSuccess, logNormalizationInputs, logNormalizationResults, logRawCpNotSaved } from "./logger";
 import { saveFile } from "../../library/bucket";
+import { logger } from "../../library/logger";
 
 async function updateEventRawCph(file: RawCph, event: Exclude<Event, Created>) {
   try {
@@ -42,7 +42,9 @@ async function updateRawCphStatus(result: NormalizationResult): Promise<unknown>
     )
   } catch (err) {
     const error = toUnexpectedError(err)
-    logRawCpNotSaved(result, error)
+    logger.error("src/service/cph/handler.ts", ["normalization", "updateRawCphStatus"],
+      `${result.rawCph._id} has been treated with a status: ${result.status} but has not be saved in rawFiles due: ${error}`
+    )
   }
 }
 
@@ -80,7 +82,7 @@ export async function getRawCphStatus(fromDate: Date, fromId?: string) {
     originalId: _.metadatas.identifiantDecision,
     created: _.events.find(_ => _.type === "created")?.date.toISOString(), // type safe due "created" cannot undefined
     status: _.events.reverse()[0] as Event // type safe due to _events cannot empty
-  } 
+  }
   ))
 
   return {
@@ -96,25 +98,35 @@ export async function normalizeRawCphFiles(
   const _rawCphToNormalize = defaultFilter ?? rawCphToNormalize
   const rawCphCursor = await findFileInformations<RawCph>(_rawCphToNormalize)
   const rawCphLength = await countFileInformations<RawCph>(_rawCphToNormalize)
-  logNormalizationInputs(rawCphLength)
+  logger.info("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
+    `Find ${rawCphLength} raw decisions to normalize`
+  )
 
   const results: NormalizationResult[] = await mapCursorSync(rawCphCursor, async rawCph => {
     try {
-      logNormalisationIdentification(rawCph)
+      logger.info("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
+        `normalize ${rawCph._id} - ${rawCph.path}`
+      )
       await normalizeCph(rawCph)
-      logNormalisationSuccess(rawCph)
+      logger.info("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
+        `${rawCph._id} normalized with success`
+      )
       return { rawCph, status: "success" }
     } catch (err) {
       const error = toUnexpectedError(err)
-      logNormalisationError(rawCph, error)
+      logger.error("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
+        `${rawCph._id} failed to normalize due ${error.message}`
+      )
       return { rawCph, status: "error", error }
     }
   })
 
   await Promise.all(results.map(updateRawCphStatus))
 
-  logNormalizationResults(
-    results.filter(({ status }) => status === "success").length,
-    results.filter(({ status }) => status === "error").length
+  logger.info("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
+    `Decisions successfully normalized: ${results.filter(({ status }) => status === "success").length}`
+  )
+  logger.info("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
+    `Decisions skipped: ${results.filter(({ status }) => status === "error").length}`
   )
 }
