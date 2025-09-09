@@ -5,7 +5,13 @@ import { Request } from "express";
 import { randomUUID } from "crypto";
 
 type DecisionLog = {
-  decision: { sourceId: string, sourceName: string }
+  decision: { 
+    _id?: string, 
+    sourceId: string, 
+    sourceName: string, 
+    publishStatus?: string, 
+    labelStatus?: string 
+  },
   path: string
   operations: readonly ["collect" | "extraction" | "normalization", string]
   message?: string
