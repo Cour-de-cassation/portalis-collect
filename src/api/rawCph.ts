@@ -53,12 +53,20 @@ function parseBody(body: string | undefined) {
 
 app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
   try {
-    req.log.info({ path: "src/api/rawCph.ts", message: "Collecting decision" })
+    req.logSafe.info({ 
+      path: "src/api/rawCph.ts", 
+      operations: ["collect", `${req.method} ${req.path}`], 
+      message: "Collecting decision" 
+    })
     const file = parseFile(req.file);
     const body = parseBody(req.body[BODY_FIELD]);
     const { _id } = await createRawCph(file, body);
 
-    req.log.info({ path: "src/api/rawCph.ts", message: `Request succeed for collect ${_id}` })
+    req.logSafe.info({ 
+      path: "src/api/rawCph.ts", 
+      operations: ["collect", `${req.method} ${req.path}`],
+      message: `Request succeed for collect ${_id}` 
+    })
     res.send({ id: _id, message: `Your file has been saved at id ${_id}.` });
   } catch (err: unknown) {
     next(err);
@@ -67,14 +75,22 @@ app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
 
 app.get("/decisions/status", async (req, res, next) => {
   try {
-    req.log.info({ path: "src/api/rawCph.ts", message: "Looking for status" })
+    req.logSafe.info({ 
+      path: "src/api/rawCph.ts", 
+      operations: ["collect", `${req.method} ${req.path}`],
+      message: "Looking for status" 
+    })
     const maybeQuery = parseStatusQuery(req.query)
     if (maybeQuery.error) throw toNotSupported("req.query", req.query, maybeQuery.error)
 
     const { from_date: fromDate, from_id: fromId } = maybeQuery.data
     const decisionsStatus = await getRawCphStatus(fromDate, fromId)
 
-    req.log.info({ path: "src/api/rawCph.ts", message: `Request succeed for status ${JSON.stringify(req.query)}` })
+    req.logSafe.info({ 
+      path: "src/api/rawCph.ts", 
+      operations: ["collect", `${req.method} ${req.path}`],
+      message: `Request succeed for status ${JSON.stringify(req.query)}` 
+    })
     res.send(decisionsStatus)
   } catch (err: unknown) {
     next(err);

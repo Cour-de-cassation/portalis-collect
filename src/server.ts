@@ -1,7 +1,7 @@
 import express, { Express } from "express";
 import helmet from "helmet";
 
-import { logger, loggerHttp } from "./library/logger";
+import { CustomLogger, logger, loggerHttp } from "./library/logger";
 import cphFileRoute from "./api/rawCph";
 import { errorHandler } from "./api/error";
 import authRoute from "./api/authentication";
@@ -17,9 +17,9 @@ app
   .use(errorHandler);
 
 app.listen(PORT, () => {
-  logger.info(
-    "src/server.ts",
-    ["collect", "startServer"],
-    `PORTALIS-COLLECT running on port ${PORT}`
-  );
+  logger.info({
+    path: "src/server.ts",
+    operations: ["collect", "startServer"],
+    message: `PORTALIS-COLLECT running on port ${PORT}`
+  });
 });

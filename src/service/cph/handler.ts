@@ -42,9 +42,11 @@ async function updateRawCphStatus(result: NormalizationResult): Promise<unknown>
     )
   } catch (err) {
     const error = toUnexpectedError(err)
-    logger.error("src/service/cph/handler.ts", ["normalization", "updateRawCphStatus"],
-      `${result.rawCph._id} has been treated with a status: ${result.status} but has not be saved in rawFiles due: ${error}`
-    )
+    logger.error({
+      path: "src/service/cph/handler.ts",
+      operations: ["normalization", "updateRawCphStatus"],
+      message: `${result.rawCph._id} has been treated with a status: ${result.status} but has not be saved in rawFiles due: ${error}`
+    })
   }
 }
 
@@ -98,35 +100,47 @@ export async function normalizeRawCphFiles(
   const _rawCphToNormalize = defaultFilter ?? rawCphToNormalize
   const rawCphCursor = await findFileInformations<RawCph>(_rawCphToNormalize)
   const rawCphLength = await countFileInformations<RawCph>(_rawCphToNormalize)
-  logger.info("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
-    `Find ${rawCphLength} raw decisions to normalize`
-  )
+  logger.info({
+    path: "src/service/cph/handler.ts",
+    operations: ["normalization", "normalizeRawCphFiles"],
+    message: `Find ${rawCphLength} raw decisions to normalize`
+  })
 
   const results: NormalizationResult[] = await mapCursorSync(rawCphCursor, async rawCph => {
     try {
-      logger.info("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
-        `normalize ${rawCph._id} - ${rawCph.path}`
-      )
+      logger.info({
+        path: "src/service/cph/handler.ts",
+        operations: ["normalization", "normalizeRawCphFiles"],
+        message: `normalize ${rawCph._id} - ${rawCph.path}`
+      })
       await normalizeCph(rawCph)
-      logger.info("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
-        `${rawCph._id} normalized with success`
-      )
+      logger.info({
+        path: "src/service/cph/handler.ts",
+        operations: ["normalization", "normalizeRawCphFiles"],
+        message: `${rawCph._id} normalized with success`
+      })
       return { rawCph, status: "success" }
     } catch (err) {
       const error = toUnexpectedError(err)
-      logger.error("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
-        `${rawCph._id} failed to normalize due ${error.message}`
-      )
+      logger.error({
+        path: "src/service/cph/handler.ts",
+        operations: ["normalization", "normalizeRawCphFiles"],
+        message: `${rawCph._id} failed to normalize due ${error.message}`
+      })
       return { rawCph, status: "error", error }
     }
   })
 
   await Promise.all(results.map(updateRawCphStatus))
 
-  logger.info("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
-    `Decisions successfully normalized: ${results.filter(({ status }) => status === "success").length}`
-  )
-  logger.info("src/service/cph/handler.ts", ["normalization", "normalizeRawCphFiles"],
-    `Decisions skipped: ${results.filter(({ status }) => status === "error").length}`
-  )
+  logger.info({
+    path: "src/service/cph/handler.ts",
+    operations: ["normalization", "normalizeRawCphFiles"],
+    message: `Decisions successfully normalized: ${results.filter(({ status }) => status === "success").length}`
+  })
+  logger.info({
+    path: "src/service/cph/handler.ts",
+    operations: ["normalization", "normalizeRawCphFiles"],
+    message: `Decisions skipped: ${results.filter(({ status }) => status === "error").length}`
+  })
 }

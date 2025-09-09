@@ -2,7 +2,11 @@ import { NextFunction, Request, Response } from "express";
 import { isCustomError } from "../library/error";
 
 export const errorHandler = (err: Error, req: Request, res: Response, _: NextFunction) => {
-  req.log.error({ path: "src/api/error.ts", message: `${err}` })
+  req.logSafe.error({ 
+    path: "src/api/error.ts", 
+    operations: ["collect", `${req.method} ${req.path}`],
+    message: `${err}` 
+  })
 
   if (isCustomError(err)) {
     switch (err.type) {
