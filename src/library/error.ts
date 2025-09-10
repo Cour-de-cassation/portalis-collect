@@ -1,5 +1,4 @@
 import { ParseError, stringifyError } from 'dbsder-api-types'
-import z from 'zod'
 
 export class NotSupported extends Error {
   type = 'notSupported' as const

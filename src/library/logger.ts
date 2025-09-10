@@ -1,16 +1,15 @@
 import pino, { Logger, LoggerOptions } from "pino";
-import pinoHttp from "pino-http";
 import { NODE_ENV } from "./env";
-import { Request } from "express";
+import { Handler } from "express";
 import { randomUUID } from "crypto";
 
 type DecisionLog = {
-  decision: { 
-    _id?: string, 
-    sourceId: string, 
-    sourceName: string, 
-    publishStatus?: string, 
-    labelStatus?: string 
+  decision: {
+    _id?: string,
+    sourceId: string,
+    sourceName: string,
+    publishStatus?: string,
+    labelStatus?: string
   },
   path: string
   operations: readonly ["collect" | "extraction" | "normalization", string]
@@ -19,7 +18,7 @@ type DecisionLog = {
 
 type TechLog = {
   path: string
-  operations: readonly ["collect" | "extraction" | "normalization", string]
+  operations: readonly ["collect" | "extraction" | "normalization" | "other", string]
   message?: string
 }
 
@@ -33,7 +32,6 @@ const pinoPrettyConf = {
 };
 
 const loggerOptions: LoggerOptions = {
-  base: { appName: "portalis-collect" },
   formatters: {
     level: (label) => {
       return {
@@ -65,28 +63,43 @@ const loggerOptions: LoggerOptions = {
     NODE_ENV === "development" ? pinoPrettyConf : undefined,
 };
 
-export type CustomLogger = Omit<Logger, 'error'|'warn'|'info'> & {
+export type CustomLogger = Omit<Logger, 'error' | 'warn' | 'info'> & {
   error: (a: TechLog) => void,
   warn: (a: TechLog) => void,
   info: (a: TechLog | DecisionLog) => void,
 }
 
+export const logger: CustomLogger = pino(loggerOptions);
+
 declare module "http" {
   interface IncomingMessage {
-    logSafe: CustomLogger;
-    allLogsSafe: CustomLogger[];
+    log: CustomLogger;
+    allLogs: CustomLogger[];
   }
 
   interface OutgoingMessage {
-    logSafe: CustomLogger;
-    allLogsSafe: CustomLogger[];
+    log: CustomLogger;
+    allLogs: CustomLogger[];
   }
 }
 
-export const logger: CustomLogger = pino(loggerOptions);
+export const loggerHttp: Handler = (req, res, next) => {
+  const requestId = randomUUID()
 
-export const loggerHttp = pinoHttp<Request>({
-  logger,
-  autoLogging: false,
-  genReqId: () => randomUUID(),
-});
+  const httpLogger = pino({
+    ...loggerOptions,
+    formatters: {
+      ...loggerOptions.formatters,
+      log: (content) => ({
+        ...content,
+        type: Object.keys(content).includes("decison") ? "decision" : "tech",
+        appName: "portalis-collect",
+        requestId
+      })
+    }
+  })
+
+  req.log = httpLogger
+  res.log = httpLogger
+  next()
+}

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { MissingValue, NotSupported, toNotSupported } from "../library/error";
+import { isCustomError, MissingValue, NotSupported, toNotSupported } from "../library/error";
 import { parsePublicationRules, parseStatusQuery } from "../service/cph/models";
 import { createRawCph, getRawCphStatus } from "../service/cph/handler";
 
@@ -38,36 +38,33 @@ function parseFile(file: Express.Multer.File | undefined) {
 }
 
 function parseBody(body: string | undefined) {
-  if (!body)
-    throw new MissingValue(
-      FILE_FIELD,
-      `${BODY_FIELD} is missing on request body`
-    );
-  const maybeBody = JSON.parse(body);
-  const maybePublicationRules = parsePublicationRules(maybeBody);
+  try {
+    if (!body)
+      throw new MissingValue(
+        FILE_FIELD,
+        `${BODY_FIELD} is missing on request body`
+      );
+    const maybeBody = JSON.parse(body);
+    const maybePublicationRules = parsePublicationRules(maybeBody);
 
-  if (maybePublicationRules instanceof Error) throw maybePublicationRules;
+    if (maybePublicationRules instanceof Error) throw maybePublicationRules;
 
-  return maybePublicationRules;
+    return maybePublicationRules;
+  } catch(err) {
+    if (isCustomError(err)) throw err
+    if (err instanceof Error) throw toNotSupported("body", body, err)
+    throw new NotSupported("body", body, `${err}`)
+  }
 }
 
 app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
   try {
-    req.logSafe.info({ 
-      path: "src/api/rawCph.ts", 
-      operations: ["collect", `${req.method} ${req.path}`], 
-      message: "Collecting decision" 
-    })
     const file = parseFile(req.file);
     const body = parseBody(req.body[BODY_FIELD]);
     const { _id } = await createRawCph(file, body);
 
-    req.logSafe.info({ 
-      path: "src/api/rawCph.ts", 
-      operations: ["collect", `${req.method} ${req.path}`],
-      message: `Request succeed for collect ${_id}` 
-    })
     res.send({ id: _id, message: `Your file has been saved at id ${_id}.` });
+    next()
   } catch (err: unknown) {
     next(err);
   }
@@ -75,23 +72,14 @@ app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
 
 app.get("/decisions/status", async (req, res, next) => {
   try {
-    req.logSafe.info({ 
-      path: "src/api/rawCph.ts", 
-      operations: ["collect", `${req.method} ${req.path}`],
-      message: "Looking for status" 
-    })
     const maybeQuery = parseStatusQuery(req.query)
     if (maybeQuery.error) throw toNotSupported("req.query", req.query, maybeQuery.error)
 
     const { from_date: fromDate, from_id: fromId } = maybeQuery.data
     const decisionsStatus = await getRawCphStatus(fromDate, fromId)
 
-    req.logSafe.info({ 
-      path: "src/api/rawCph.ts", 
-      operations: ["collect", `${req.method} ${req.path}`],
-      message: `Request succeed for status ${JSON.stringify(req.query)}` 
-    })
     res.send(decisionsStatus)
+    next()
   } catch (err: unknown) {
     next(err);
   }

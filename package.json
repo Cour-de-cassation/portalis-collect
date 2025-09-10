@@ -7,7 +7,7 @@
   "license": "ISC",
   "scripts": {
     "start:api:docker": "docker compose up -d",
-    "start:normalization:docker": "docker compose run --rm portalis-collect npx ts-node src/scripts/startNormalizationOnAllStock.ts",
+    "start:batch:docker": "docker compose run --rm portalis-collect npx ts-node src/scripts/startNormalizationOnAllStock.ts",
     "start:api:watch": "nodemon --watch 'src/**' --ext 'ts,json' --exec 'npx ts-node src/server.ts'",
     "start:batch:watch": "npx ts-node src/batch.ts",
     "build": "tsc --build"
@@ -28,7 +28,6 @@
     "multer": "2.0.2",
     "pdf-lib": "1.17.1",
     "pino": "9.9.0",
-    "pino-http": "10.5.0",
     "uuid": "11.1.0",
     "zod": "4.1.5"
   },
