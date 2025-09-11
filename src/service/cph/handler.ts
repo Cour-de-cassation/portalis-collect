@@ -45,7 +45,8 @@ async function updateRawCphStatus(result: NormalizationResult): Promise<unknown>
     logger.error({
       path: "src/service/cph/handler.ts",
       operations: ["normalization", "updateRawCphStatus"],
-      message: `${result.rawCph._id} has been treated with a status: ${result.status} but has not be saved in rawFiles due: ${error}`
+      message: `${result.rawCph._id} has been treated with a status: ${result.status} but has not be saved in rawFiles`,
+      error
     })
   }
 }
@@ -125,7 +126,8 @@ export async function normalizeRawCphFiles(
       logger.error({
         path: "src/service/cph/handler.ts",
         operations: ["normalization", "normalizeRawCphFiles"],
-        message: `${rawCph._id} failed to normalize due ${error.message}`
+        message: `${rawCph._id} failed to normalize`,
+        error
       })
       return { rawCph, status: "error", error }
     }

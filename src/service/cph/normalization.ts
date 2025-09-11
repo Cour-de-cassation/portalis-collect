@@ -20,7 +20,8 @@ function searchXml(
       logger.error({
         path: "src/service/cph/normalization.ts",
         operations: ["normalization", "searchXml"],
-        message: `Error on attachment ${index + 1}:\n${error}`
+        message: `Error on attachment ${index + 1}`,
+        error
       })
       return acc
     }
