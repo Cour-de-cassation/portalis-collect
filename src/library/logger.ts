@@ -1,25 +1,24 @@
-import pino, { LoggerOptions } from "pino";
-import pinoHttp from "pino-http";
+import pino, { Logger, LoggerOptions } from "pino";
 import { NODE_ENV } from "./env";
-import { Request } from "express";
+import { Handler } from "express";
 import { randomUUID } from "crypto";
 
 type DecisionLog = {
-  level: "info"
-  type: "decision"
-  appName: "portalis-collect",
-  decision: { sourceId: string, sourceName: string }
+  decision: {
+    _id?: string,
+    sourceId: string,
+    sourceName: string,
+    publishStatus?: string,
+    labelStatus?: string
+  },
   path: string
   operations: readonly ["collect" | "extraction" | "normalization", string]
   message?: string
 }
 
 type TechLog = {
-  level: "info" | "warn" | "error"
-  type: "tech",
-  appName: "portalis-collect"
   path: string
-  operations: readonly ["collect" | "extraction" | "normalization", string]
+  operations: readonly ["collect" | "extraction" | "normalization" | "other", string]
   message?: string
 }
 
@@ -33,13 +32,17 @@ const pinoPrettyConf = {
 };
 
 const loggerOptions: LoggerOptions = {
-  base: { appName: "portalis-collect" },
   formatters: {
     level: (label) => {
       return {
         logLevel: label.toUpperCase(),
       };
     },
+    log: (content) => ({
+      ...content,
+      type: Object.keys(content).includes("decison") ? "decision" : "tech",
+      appName: "portalis-collect",
+    })
   },
   timestamp: () => `,"timestamp":"${new Date(Date.now()).toISOString()}"`,
   redact: {
@@ -60,94 +63,43 @@ const loggerOptions: LoggerOptions = {
     NODE_ENV === "development" ? pinoPrettyConf : undefined,
 };
 
-const pinoLogger = pino(loggerOptions);
+export type CustomLogger = Omit<Logger, 'error' | 'warn' | 'info'> & {
+  error: (a: TechLog & { error: Error }) => void,
+  warn: (a: TechLog) => void,
+  info: (a: TechLog | DecisionLog) => void,
+}
 
-export const loggerHttp = pinoHttp<Request>({
-  ...loggerOptions,
-  autoLogging: false,
-  genReqId: () => randomUUID(),
-  customProps: (req) => {
-    console.log(req.originalUrl)
-    return ({
-      type: "tech",
-      appName: "portalis-collect",
-      operations: ["collect", req.originalUrl],
-      requestId: req.id
-    })
-  },
-}); // attach logger instance at req (req.log will log message and req info)
+export const logger: CustomLogger = pino(loggerOptions);
 
-
-function decision(
-  sourceId: DecisionLog["decision"]["sourceId"],
-  path: DecisionLog["path"],
-  operations: DecisionLog["operations"],
-  message?: DecisionLog["message"]
-) {
-  const log: DecisionLog = {
-    type: "decision",
-    level: "info",
-    appName: "portalis-collect",
-    decision: { sourceId, sourceName: "portalis-cph" },
-    path,
-    message,
-    operations
+declare module "http" {
+  interface IncomingMessage {
+    log: CustomLogger;
+    allLogs: CustomLogger[];
   }
-  pinoLogger.info(log)
-}
 
-function info(
-  path: TechLog["path"],
-  operations: TechLog["operations"],
-  message?: TechLog["message"]
-) {
-  const log: TechLog = {
-    level: "info",
-    appName: "portalis-collect",
-    path,
-    message,
-    operations: operations,
-    type: "tech"
+  interface OutgoingMessage {
+    log: CustomLogger;
+    allLogs: CustomLogger[];
   }
-  pinoLogger.info(log)
 }
 
-function warn(
-  path: TechLog["path"],
-  operations: TechLog["operations"],
-  message?: TechLog["message"]
-) {
-  const log: TechLog = {
-    level: "warn",
-    appName: "portalis-collect",
-    path,
-    message,
-    operations: operations,
-    type: "tech"
-  }
-  pinoLogger.warn(log)
-}
+export const loggerHttp: Handler = (req, res, next) => {
+  const requestId = randomUUID()
 
-function error(
-  path: TechLog["path"],
-  operations: TechLog["operations"],
-  message?: TechLog["message"]
-) {
-  const log: TechLog = {
-    level: "error",
-    appName: "portalis-collect",
-    path,
-    message,
-    operations: operations,
-    type: "tech"
-  }
-  pinoLogger.error(log)
-}
+  const httpLogger = pino({
+    ...loggerOptions,
+    formatters: {
+      ...loggerOptions.formatters,
+      log: (content) => ({
+        ...content,
+        type: Object.keys(content).includes("decison") ? "decision" : "tech",
+        appName: "portalis-collect",
+        requestId
+      })
+    }
+  })
 
-export const logger = {
-  info,
-  warn,
-  error,
-  decision
+  req.log = httpLogger
+  res.log = httpLogger
+  next()
 }
-

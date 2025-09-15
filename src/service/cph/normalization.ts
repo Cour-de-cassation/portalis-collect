@@ -17,9 +17,12 @@ function searchXml(
       return acc ?? xml
     } catch (err) {
       const error = err instanceof Error ? err : new UnexpectedError(`${err}`)
-      logger.error("src/service/cph/normalization.ts", ["normalization", "searchXml"],
-        `Error on attachment ${index + 1}:\n${error}`
-      )
+      logger.error({
+        path: "src/service/cph/normalization.ts",
+        operations: ["normalization", "searchXml"],
+        message: `Error on attachment ${index + 1}`,
+        error
+      })
       return acc
     }
   }, undefined)
@@ -40,13 +43,17 @@ async function getCphContent(
   fileNamePdf: string,
   cphFile: Buffer
 ): Promise<string> {
-  logger.info("src/service/cph/normalization.ts", ["extraction", "getCphContent"],
-    "Waiting for text extraction"
-  )
+  logger.info({
+    path: "src/service/cph/normalization.ts",
+    operations: ["extraction", "getCphContent"],
+    message: "Waiting for text extraction"
+  })
   const html = await pdfToHtml(fileNamePdf, cphFile);
-  logger.info("src/service/cph/normalization.ts", ["extraction", "getCphContent"],
-    "Text successfully extracted"
-  )
+  logger.info({
+    path: "src/service/cph/normalization.ts",
+    operations: ["extraction", "getCphContent"],
+    message: "Text successfully extracted"
+  })
   return htmlToPlainText(html);
 }
 
