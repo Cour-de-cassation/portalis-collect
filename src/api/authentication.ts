@@ -7,6 +7,7 @@ import OAuth2Server, {
 import { NotSupported, UnauthorizedError } from "../library/error";
 import { validateBasic, validateOAuth } from "../service/authentication";
 import { ACCESS_TOKEN_LIFETIME_IN_SECONDS, AUTH_STRATEGY } from "../library/env";
+import { responseLog } from "./logger";
 
 const basicAuthHandler = (
   req: Request,
@@ -70,6 +71,7 @@ function oAuthTokenRoute(oAuthServer: OAuth2Server) {
         accessToken: t.accessToken,
         accessTokenExpiresAt: t.accessTokenExpiresAt,
       });
+      return responseLog(req, res)
     } catch (err) {
       next(
         new UnauthorizedError(

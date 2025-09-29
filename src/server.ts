@@ -5,7 +5,9 @@ import { logger, loggerHttp } from "./library/logger";
 import cphFileRoute from "./api/rawCph";
 import { errorHandler } from "./api/error";
 import authRoute from "./api/authentication";
+import { requestLog } from "./api/logger";
 import { PORT } from "./library/env";
+import { NotFound } from "./library/error";
 
 const app: Express = express();
 
@@ -13,26 +15,13 @@ app
   .use(helmet())
   .use(loggerHttp)
 
-  .use((req, _, next) => {
-    req.log.info({
-      path: "src/server.ts",
-      operations: ["other", `${req.method} ${req.path}`],
-      message: "Request received"
-    })
-    next()
-  })
+  .use(requestLog)
 
   .use(authRoute)
   .use(cphFileRoute)
-  .use(errorHandler)
 
-  .use((req, res) => {
-    res.log.info({
-      path: "src/server.ts",
-      operations: ["other", `${req.method} ${req.path}`],
-      message: `Done with statusCode: ${res.statusCode}`
-    })
-  });
+  .use((req, _, next) => next(new NotFound('path', `${req.method} ${req.path} doesn't exists`)))
+  .use(errorHandler)
 
 app.listen(PORT, () => {
   logger.info({

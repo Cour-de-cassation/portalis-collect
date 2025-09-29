@@ -3,6 +3,7 @@ import multer from "multer";
 import { isCustomError, MissingValue, NotSupported, toNotSupported } from "../library/error";
 import { parsePublicationRules, parseStatusQuery } from "../service/cph/models";
 import { createRawCph, getRawCphStatus } from "../service/cph/handler";
+import { responseLog } from "./logger";
 
 export const FILE_FIELD = "fichierDecisionIntegre";
 export const BODY_FIELD = "openDataProperties";
@@ -64,7 +65,7 @@ app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
     const { _id } = await createRawCph(file, body);
 
     res.send({ id: _id, message: `Your file has been saved at id ${_id}.` });
-    next()
+    return responseLog(req, res)
   } catch (err: unknown) {
     next(err);
   }
@@ -79,7 +80,7 @@ app.get("/decisions/status", async (req, res, next) => {
     const decisionsStatus = await getRawCphStatus(fromDate, fromId)
 
     res.send(decisionsStatus)
-    next()
+    return responseLog(req, res)
   } catch (err: unknown) {
     next(err);
   }
