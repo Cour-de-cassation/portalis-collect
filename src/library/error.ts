@@ -88,6 +88,7 @@ type CustomError = NotSupported | MissingValue | NotFound | UnauthorizedError | 
 export function isCustomError(x: any): x is CustomError {
   switch (x.type) {
     case "notSupported":
+    case "notFound":
     case "missingValue":
     case "unauthorizedError":
     case "unexpectedError":

@@ -7,7 +7,7 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     path: "src/api/error.ts", 
     operations: ["other", `${req.method} ${req.path}`],
     message: err.message,
-    error: err
+    stack: err.stack
   })
 
   if (isCustomError(err)) {
