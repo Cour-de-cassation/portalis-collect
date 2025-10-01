@@ -22,6 +22,3 @@ USER node
 FROM prod AS api
 
 CMD ["node", "dist/server.js"]
-
-FROM prod AS batch
-CMD ["node", "dist/batch.js"]
