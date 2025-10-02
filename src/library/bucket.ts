@@ -34,15 +34,3 @@ export function saveFile(
     })
   );
 }
-
-export async function getFileByName(
-  name: string
-): Promise<Buffer> {
-  const fileFromS3 = await s3Client.send(
-    new GetObjectCommand({ Bucket: S3_BUCKET_NAME, Key: name })
-  );
-  if (!fileFromS3.Body)
-    throw new UnexpectedError(`File: ${name} seems empty or its body cannot be read.`);
-  const byteArray = await fileFromS3.Body.transformToByteArray();
-  return Buffer.from(byteArray.buffer);
-}

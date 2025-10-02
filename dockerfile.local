@@ -5,4 +5,4 @@ WORKDIR /home/node
 
 COPY --chown=node:node . .
 
-CMD ["npm", "run", "start:api:watch"]
+CMD ["npm", "run", "start:watch"]
