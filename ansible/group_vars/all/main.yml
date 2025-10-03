@@ -11,9 +11,6 @@ s3_region: "eu-west-paris-1"
 s3_bucket_name: "portalis-collect-test-bucket"
 
 use_auth: "oauth"
-oauth_client_id: "portalis"
-oauth_provider_url: "http://localhost:{{ api_port }}"
-oauth_token_url: "{{ oauth_provider_url }}/token"
 
 api_port: "3015"
 authentication_id: "portalis"
