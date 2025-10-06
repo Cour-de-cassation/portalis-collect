@@ -13,6 +13,5 @@ s3_bucket_name: "portalis-collect-test-bucket"
 use_auth: "oauth"
 
 api_port: "3015"
-authentication_id: "portalis"
 
 node_env: "production"
