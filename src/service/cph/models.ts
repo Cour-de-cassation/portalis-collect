@@ -9,7 +9,7 @@ export type FileCph = {
 };
 
 const schemaPublicationRules = zod.object({
-  identifiantDecision: zod.string().trim().min(1),
+  identifiantDecision: zod.string().trim().min(1).or(zod.number().min(0).transform(_ => _.toString())),
   recommandationOccultation: zod.object({
     suiviRecommandationOccultation: zod.boolean(),
     elementsAOcculter: zod.array(zod.string()),
