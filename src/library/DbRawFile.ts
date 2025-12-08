@@ -10,17 +10,12 @@ import {
 import { FILE_DB_URL, S3_BUCKET_NAME } from "./env"
 
 const client = new MongoClient(FILE_DB_URL)
-
-async function dbConnect() {
-    const db = client.db()
-    await client.connect()
-    return db
-}
+const dbConnect = client.connect().then(_ => _.db())
 
 export async function createFileInformation<T extends Document>(
     file: OptionalUnlessRequiredId<T>,
 ): Promise<{ _id: InferIdType<T> } & typeof file> {
-    const db = await dbConnect()
+    const db = await dbConnect
     const { insertedId } = await db
         .collection<T>(S3_BUCKET_NAME)
         .insertOne(file)
@@ -32,7 +27,7 @@ export async function findFileInformationsList<T extends Document>(
     cursor: string | undefined,
     limit = 100
 ): Promise<WithId<T>[]> {
-    const db = await dbConnect()
+    const db = await dbConnect
     const filtersWithPagination = cursor ? { _id: { $gt: new ObjectId(cursor) }, ...filters } : filters
 
     return db.collection<T>(S3_BUCKET_NAME)
