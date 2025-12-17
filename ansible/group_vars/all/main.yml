@@ -6,7 +6,7 @@ api_service: "api-service"
 bucket_service: "bucket-service"
 portalis_private_name: "pts.judilibre-prive.local"
 
-s3_url: "http://bucket-service.juritj.svc.cluster.local:9000"
+s3_url: "http://bucket-service.bucket.svc.cluster.local:9000"
 s3_region: "eu-west-paris-1"
 
 use_auth: "oauth"
