@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { isCustomError } from "../library/error";
+import { isCustomError } from "../services/error";
 import { responseLog } from "./logger";
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {

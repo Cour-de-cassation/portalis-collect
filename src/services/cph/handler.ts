@@ -1,13 +1,13 @@
 import { v4 as uuid } from "uuid";
 
-import { toUnexpectedError, UnexpectedError } from "../../library/error";
+import { toUnexpectedError, UnexpectedError } from "../error";
 import {
   Event,
   FileCph,
   RawCph,
 } from "./models";
-import { createFileInformation, findFileInformationsList } from "../../library/DbRawFile";
-import { saveFile } from "../../library/bucket";
+import { createFileInformation, findFileInformationsList } from "../../connectors/dbRawFile";
+import { saveFile } from "../../connectors/bucket";
 
 export async function createRawCph(
   file: FileCph,

@@ -7,7 +7,7 @@ import {
     OptionalUnlessRequiredId, 
     InferIdType, 
 } from "mongodb"
-import { FILE_DB_URL, S3_BUCKET_NAME } from "./env"
+import { FILE_DB_URL, S3_BUCKET_NAME } from "../config/env"
 
 const client = new MongoClient(FILE_DB_URL)
 const dbConnect = client.connect().then(_ => _.db())

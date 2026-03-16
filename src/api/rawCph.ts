@@ -1,8 +1,8 @@
 import { Router } from "express";
 import multer from "multer";
-import { isCustomError, MissingValue, NotSupported, toNotSupported } from "../library/error";
-import { parsePublicationRules, parseStatusQuery } from "../service/cph/models";
-import { createRawCph, getRawCphStatus } from "../service/cph/handler";
+import { isCustomError, MissingValue, NotSupported, toNotSupported } from "../services/error";
+import { parsePublicationRules, parseStatusQuery } from "../services/cph/models";
+import { createRawCph, getRawCphStatus } from "../services/cph/handler";
 import { responseLog } from "./logger";
 
 export const FILE_FIELD = "fichierDecisionIntegre";

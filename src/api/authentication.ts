@@ -4,9 +4,9 @@ import OAuth2Server, {
   Response as oAuthResponse,
 } from "@node-oauth/oauth2-server";
 
-import { NotSupported, UnauthorizedError } from "../library/error";
-import { validateBasic, validateOAuth } from "../service/authentication";
-import { ACCESS_TOKEN_LIFETIME_IN_SECONDS, AUTH_STRATEGY } from "../library/env";
+import { NotSupported, UnauthorizedError } from "../services/error";
+import { validateBasic, validateOAuth } from "../services/authentication";
+import { ACCESS_TOKEN_LIFETIME_IN_SECONDS, AUTH_STRATEGY } from "../config/env";
 import { responseLog } from "./logger";
 
 const basicAuthHandler = (

@@ -1,6 +1,6 @@
 import zod from "zod";
-import { NotSupported, toNotSupported } from "../../library/error";
-import { Id } from "../../library/DbRawFile";
+import { NotSupported, toNotSupported } from "../error";
+import { Id } from "../../connectors/dbRawFile";
 
 export type FileCph = {
     mimetype: string;
