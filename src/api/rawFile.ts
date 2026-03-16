@@ -1,8 +1,8 @@
 import { Router } from "express";
 import multer from "multer";
 import { isCustomError, MissingValue, NotSupported, toNotSupported } from "../services/error";
-import { parsePublicationRules, parseStatusQuery } from "../services/cph/models";
-import { createRawCph, getRawCphStatus } from "../services/cph/handler";
+import { parsePublicationRules, parseStatusQuery } from "../services/models";
+import { createRawFile, getRawFileStatus } from "../services/handler";
 import { responseLog } from "./logger";
 
 export const FILE_FIELD = "fichierDecisionIntegre";
@@ -62,7 +62,7 @@ app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
   try {
     const file = parseFile(req.file);
     const body = parseBody(req.body[BODY_FIELD]);
-    const { _id } = await createRawCph(file, body);
+    const { _id } = await createRawFile(file, body);
 
     res.send({ id: _id, message: `Your file has been saved at id ${_id}.` });
     return responseLog(req, res)
@@ -77,7 +77,7 @@ app.get("/decisions/status", async (req, res, next) => {
     if (maybeQuery.error) throw toNotSupported("req.query", req.query, maybeQuery.error)
 
     const { from_date: fromDate, from_id: fromId } = maybeQuery.data
-    const decisionsStatus = await getRawCphStatus(fromDate, fromId)
+    const decisionsStatus = await getRawFileStatus(fromDate, fromId)
 
     res.send(decisionsStatus)
     return responseLog(req, res)

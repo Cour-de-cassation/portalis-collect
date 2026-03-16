@@ -1,8 +1,8 @@
 import zod from "zod";
-import { NotSupported, toNotSupported } from "../error";
-import { Id } from "../../connectors/dbRawFile";
+import { NotSupported, toNotSupported } from "./error";
+import { Id } from "../connectors/dbRawFile";
 
-export type FileCph = {
+export type FilePortalis = {
     mimetype: string;
     size: number;
     buffer: Buffer;
@@ -31,7 +31,7 @@ export function parsePublicationRules(
   return result.data;
 }
 
-const schemaCphMetadatas = zod.object({
+const schemaPortalisMetadatas = zod.object({
   audiences_dossier: zod
     .object({
       audience_dossier: zod.array(
@@ -80,12 +80,12 @@ const schemaCphMetadatas = zod.object({
   })
 })
 const pdfMetadata = zod.object({
-  root: zod.object({ document: schemaCphMetadatas })
+  root: zod.object({ document: schemaPortalisMetadatas })
 })
-export type CphMetadatas = zod.infer<typeof schemaCphMetadatas>
-export function parseCphMetadatas(cphMetadatas: any): { root: { document: CphMetadatas } } {
-  const result = pdfMetadata.safeParse(cphMetadatas)
-  if (result.error) throw toNotSupported('cphMetadatas', cphMetadatas, result.error)
+export type PortalisMetadatas = zod.infer<typeof schemaPortalisMetadatas>
+export function parsePortalisMetadatas(portalisMetadatas: any): { root: { document: PortalisMetadatas } } {
+  const result = pdfMetadata.safeParse(portalisMetadatas)
+  if (result.error) throw toNotSupported('portalisMetadatas', portalisMetadatas, result.error)
   return result.data
 }
 
@@ -108,11 +108,11 @@ export type Blocked = {
 
 export type Event = (Created | Normalized | Blocked)
 
-export type RawCph = {
+export type RawPortalis = {
     _id: Id,
     path: string,
     events: [Created, ...Event[]]
-    metadatas: PublicationRules & { metadatas: CphMetadatas }
+    metadatas: PublicationRules & { metadatas: PortalisMetadatas }
 }
 
 const utcDateSchema = zod.iso.date().transform((val) => new Date(val));

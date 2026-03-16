@@ -2,7 +2,7 @@ import express, { Express } from "express";
 import helmet from "helmet";
 
 import { logger, loggerHttp } from "./config/logger";
-import cphFileRoute from "./api/rawCph";
+import fileRoute from "./api/rawFile";
 import { errorHandler } from "./api/error";
 import authRoute from "./api/authentication";
 import { requestLog } from "./api/logger";
@@ -18,7 +18,7 @@ app
   .use(requestLog)
 
   .use(authRoute)
-  .use(cphFileRoute)
+  .use(fileRoute)
 
   .use((req, _, next) => next(new NotFound('path', `${req.method} ${req.path} doesn't exists`)))
   .use(errorHandler)
