@@ -1,13 +1,13 @@
 import express, { Express } from "express";
 import helmet from "helmet";
 
-import { logger, loggerHttp } from "./library/logger";
-import cphFileRoute from "./api/rawCph";
+import { logger, loggerHttp } from "./config/logger";
+import fileRoute from "./api/rawFile";
 import { errorHandler } from "./api/error";
 import authRoute from "./api/authentication";
 import { requestLog } from "./api/logger";
-import { PORT } from "./library/env";
-import { NotFound } from "./library/error";
+import { PORT } from "./config/env";
+import { NotFound } from "./services/error";
 
 const app: Express = express();
 
@@ -18,7 +18,7 @@ app
   .use(requestLog)
 
   .use(authRoute)
-  .use(cphFileRoute)
+  .use(fileRoute)
 
   .use((req, _, next) => next(new NotFound('path', `${req.method} ${req.path} doesn't exists`)))
   .use(errorHandler)

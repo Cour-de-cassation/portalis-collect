@@ -4,7 +4,7 @@ import {
   ClientCredentialsModel,
   User,
 } from "@node-oauth/oauth2-server"; // Warn: types of this lib are completely screw
-import { AUTHENTICATION_ID, AUTHENTICATION_KEY } from "../library/env";
+import { AUTHENTICATION_ID, AUTHENTICATION_KEY } from "../config/env";
 
 type ClientExtended = Client & { secret: string; user: { name: string } };
 
