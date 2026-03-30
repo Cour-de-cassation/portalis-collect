@@ -1,1 +1,0 @@
-{"root":["./src/server.ts","./src/api/authentication.ts","./src/api/error.ts","./src/api/logger.ts","./src/api/rawCph.ts","./src/configs/env.ts","./src/configs/logger.ts","./src/connectors/bucket.ts","./src/connectors/dbRawFile.ts","./src/service/authentication.ts","./src/service/error.ts","./src/service/cph/handler.ts","./src/service/cph/models.ts"],"version":"5.9.3"}
