@@ -14,3 +14,5 @@ use_auth: "oauth"
 api_port: "3015"
 
 node_env: "production"
+
+s3_bucket_name: "portalis-collect-bucket"
