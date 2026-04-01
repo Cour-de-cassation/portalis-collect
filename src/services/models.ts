@@ -3,9 +3,9 @@ import { NotSupported, toNotSupported } from "./error";
 import { Id } from "../connectors/dbRawFile";
 
 export type FilePortalis = {
-    mimetype: string;
-    size: number;
-    buffer: Buffer;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
 };
 
 const schemaPublicationRules = zod.object({
@@ -51,8 +51,7 @@ const schemaPortalisMetadatas = zod.object({
             code: zod.string(),
             libelle: zod.string()
           })
-        )
-        .min(1)
+        ).min(1)
     })
   }),
   dossier: zod.object({
@@ -91,32 +90,32 @@ export function parsePortalisMetadatas(portalisMetadatas: any): { root: { docume
 
 
 export type Created = {
-    type: "created",
-    date: Date
+  type: "created",
+  date: Date
 }
 
 export type Normalized = {
-    type: "normalized",
-    date: Date
+  type: "normalized",
+  date: Date
 }
 
 export type Blocked = {
-    type: "blocked",
-    date: Date,
-    reason: string
+  type: "blocked",
+  date: Date,
+  reason: string
 }
 
 export type Event = (Created | Normalized | Blocked)
 
 export type RawPortalis = {
-    _id: Id,
-    path: string,
-    events: [Created, ...Event[]]
-    metadatas: PublicationRules & { metadatas: PortalisMetadatas }
+  _id: Id,
+  path: string,
+  events: [Created, ...Event[]]
+  metadatas: PublicationRules & { metadatas: PortalisMetadatas }
 }
 
 const utcDateSchema = zod.iso.date().transform((val) => new Date(val));
-export const parseStatusQuery = zod.object({ 
-  from_date: utcDateSchema, 
-  from_id: zod.string().optional() 
+export const parseStatusQuery = zod.object({
+  from_date: utcDateSchema,
+  from_id: zod.string().optional()
 }).safeParse

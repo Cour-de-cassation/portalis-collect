@@ -1,9 +1,10 @@
 import { Router } from "express";
 import multer from "multer";
 import { isCustomError, MissingValue, NotSupported, toNotSupported } from "../services/error";
-import { parsePublicationRules, parseStatusQuery } from "../services/models";
-import { createRawFile, getRawFileStatus } from "../services/handler";
+import { FilePortalis, parsePortalisMetadatas, parsePublicationRules, parseStatusQuery, PortalisMetadatas } from "../services/models";
+import { createRawFile, getRawFileStatus, searchXml } from "../services/handler";
 import { responseLog } from "./logger";
+import { extractAttachments } from "../utils/pdf";
 
 export const FILE_FIELD = "fichierDecisionIntegre";
 export const BODY_FIELD = "openDataProperties";
@@ -58,11 +59,24 @@ function parseBody(body: string | undefined) {
   }
 }
 
+async function parseMetadatas(file: FilePortalis): Promise<PortalisMetadatas> {
+  try {
+    const attachments = await extractAttachments(file.buffer)
+    const xml = searchXml(attachments)
+    return parsePortalisMetadatas(xml).root.document
+  } catch(err) {  
+    if (isCustomError(err)) throw err
+    if (err instanceof Error) throw toNotSupported("xmlMetadatas", "xml", err)
+    throw new NotSupported("body", "xml", `${err}`)
+  }
+}
+
 app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
   try {
     const file = parseFile(req.file);
     const body = parseBody(req.body[BODY_FIELD]);
-    const { _id } = await createRawFile(file, body);
+    const metadatas = await parseMetadatas(file)
+    const { _id } = await createRawFile(file, body, metadatas);
 
     res.send({ id: _id, message: `Your file has been saved at id ${_id}.` });
     return responseLog(req, res)
