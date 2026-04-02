@@ -5,7 +5,6 @@ import {
   PortalisMetadatas,
   Event,
   FilePortalis,
-  parsePortalisMetadatas,
   PublicationRules,
   RawPortalis,
 } from "./models";
@@ -13,9 +12,8 @@ import { createFileInformation, findFileInformationsList } from "../connectors/d
 import { saveFile } from "../connectors/bucket";
 import { parseXml } from "../utils/xml";
 import { logger } from "../config/logger";
-import { extractAttachments } from "../utils/pdf";
 
-function searchXml(attachments: { name: string; data: Buffer }[]): unknown {
+export function searchXml(attachments: { name: string; data: Buffer }[]): unknown {
   const attachment = attachments.reduce<unknown>((acc, attachment, index) => {
     try {
       const xml = parseXml(attachment)
@@ -39,16 +37,13 @@ function searchXml(attachments: { name: string; data: Buffer }[]): unknown {
 
 export async function createRawFile(
   file: FilePortalis,
-  publicationRules: PublicationRules
+  publicationRules: PublicationRules,
+  metadatas: PortalisMetadatas
 ): Promise<RawPortalis> {
   const date = new Date()
   const path = `${uuid()}-${date.toISOString()}.pdf`;
 
   try {
-    const attachments = await extractAttachments(file.buffer)
-    const xml = searchXml(attachments)
-    const metadatas = parsePortalisMetadatas(xml).root.document
-
     await saveFile(
       path,
       file.buffer,
