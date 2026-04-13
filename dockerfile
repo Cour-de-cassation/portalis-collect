@@ -8,7 +8,7 @@ RUN npm ci
 COPY --chown=node:node . .
 RUN npm run build
 
-FROM node:24-alpine AS prod
+FROM node:24-alpine AS api
 
 WORKDIR /home/node
 
@@ -18,7 +18,5 @@ COPY --from=builder --chown=node:node /home/node/package*.json ./
 RUN npm ci --omit=dev
 
 USER node
-
-FROM prod AS api
 
 CMD ["node", "dist/server.js"]

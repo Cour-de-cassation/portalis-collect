@@ -21,4 +21,7 @@
         AUTH_STRATEGY: "{{ auth_strategy }}"
         ACCESS_TOKEN_LIFETIME_IN_SECONDS: "{{ access_token_lifetime_in_seconds }}"
         FILE_DB_URL: "{{ file_db_url }}"
+        S3_URL: "{{ s3_url }}"
+        S3_REGION: "{{ s3_region }}"
+        S3_BUCKET_NAME: "{{ s3_bucket_name }}"
 ...

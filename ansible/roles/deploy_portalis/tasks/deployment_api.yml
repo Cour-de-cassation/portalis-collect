@@ -24,7 +24,7 @@
           spec:
             containers:
               - name: "{{ api_id }}"
-                image: "{{ portalis_api_image }}"
+                image: "{{ app_image }}"
                 ports:
                   - containerPort: 3015
                 envFrom:
