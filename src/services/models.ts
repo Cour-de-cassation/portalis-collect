@@ -58,7 +58,8 @@ const schemaPortalisMetadatas = zod.object({
     nature_affaire_civile: zod.object({
       code: zod.string(),
       libelle: zod.string()
-    })
+    }),
+    numero: zod.string()
   }),
   evenement_porteur: zod.object({
     caracteristiques: zod.object({
