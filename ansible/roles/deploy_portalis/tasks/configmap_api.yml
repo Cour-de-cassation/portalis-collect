@@ -13,7 +13,7 @@
         labels:
           app: "{{ portalis_application }}"
       data:
-        NODE_ENV: "{{ node_env }}"
+        ENV: "{{ env }}"
         PORT: "{{ api_port }}"
         USE_AUTH: "{{ use_auth }}"
         AUTHENTICATION_ID: "{{ authentication_id }}"
