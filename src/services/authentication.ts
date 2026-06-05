@@ -1,68 +1,36 @@
-import {
-  Client,
-  Token,
-  ClientCredentialsModel,
-  User,
-} from "@node-oauth/oauth2-server"; // Warn: types of this lib are completely screw
-import { AUTHENTICATION_ID, AUTHENTICATION_KEY } from "../config/env";
+import { Request, Response, NextFunction } from "express"
+import * as jwtUtils from "../utils/jwt"
+import { logger } from "../config/logger"
 
-type ClientExtended = Client & { secret: string; user: { name: string } };
+const authentication = (req: Request, res: Response, next: NextFunction) => {
+  const token = jwtUtils.extractBearerToken(req.headers.authorization ?? '')
+  if (!token) {
+    logger.error({
+      path: 'src/services/authentication.ts',
+      operations: ['other', 'authentication'],
+      message: `Missing or invalid Authorization header`,
+      stack: ''
+    })
 
-// WARN: there are a trouble with oAuth2 needs.
-// we need to speak about a notmalization between services.
-// credentials are only saved into RAM for now: bad practice.
+    return res.status(400).json({
+      error: 'missing_token',
+      error_description: 'Missing or invalid Bearer token.'
+    })
+  }
 
-const savedClients: ClientExtended[] = [
-  {
-    id: AUTHENTICATION_ID,
-    secret: AUTHENTICATION_KEY,
-    grants: ["client_credentials"],
-    user: { name: "Portalis" },
-  },
-];
-let savedTokens: Token[] = [];
+  const decoded = jwtUtils.verifyToken(token)
+  if (!decoded) {
+    logger.error({
+      path: 'src/services/authentication.ts',
+      operations: ['other', 'authentication'],
+      message: `Invalid or expired token`,
+      stack: ''
+    })
 
-export function validateBasic(
-  clientId: string,
-  clientSecret: string
-): ClientExtended | false {
-  const client = savedClients.find((_) => _.id === clientId);
-  if (client && clientSecret === client.secret) return client;
-  return false;
-}
+    return res.status(401).json({ error: 'Invalid or expired token' })
+  }
 
-function getClient(
-  clientId: string,
-  clientSecret: string
-): Promise<ClientExtended | false> {
-  return Promise.resolve(validateBasic(clientId, clientSecret));
-}
-
-function saveToken(
-  token: Token,
-  client: ClientExtended,
-  user: User
-): Promise<Token> {
-  const index = savedTokens.findIndex((_) => _.client.id === client.id);
-
-  if (index === -1) savedTokens = [...savedTokens, { ...token, user, client }];
-  else savedTokens[index] = { ...token, user, client };
-
-  return Promise.resolve({ ...token, user, client });
-}
-
-function getAccessToken(accessToken: string): Promise<Token | undefined> {
-  const savedToken = savedTokens.find((_) => _.accessToken === accessToken);
-  return Promise.resolve(savedToken);
-}
-
-function getUserFromClient(client: ClientExtended): Promise<User> {
-  return Promise.resolve(client.user);
-}
-
-export const validateOAuth: ClientCredentialsModel = {
-  getClient,
-  saveToken,
-  getAccessToken,
-  getUserFromClient,
+  next();
 };
+
+export default authentication;

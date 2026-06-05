@@ -5,6 +5,8 @@ import { FilePortalis, parsePortalisMetadatas, parsePublicationRules, parseStatu
 import { createRawFile, getRawFileStatus, searchXml } from "../services/handler";
 import { responseLog } from "./logger";
 import { extractAttachments } from "../utils/pdf";
+import authMiddleware from "../services/authentication"
+
 
 export const FILE_FIELD = "fichierDecisionIntegre";
 export const BODY_FIELD = "openDataProperties";
@@ -64,14 +66,14 @@ async function parseMetadatas(file: FilePortalis): Promise<PortalisMetadatas> {
     const attachments = await extractAttachments(file.buffer)
     const xml = searchXml(attachments)
     return parsePortalisMetadatas(xml).root.document
-  } catch(err) {  
+  } catch(err) {
     if (isCustomError(err)) throw err
     if (err instanceof Error) throw toNotSupported("xmlMetadatas", "xml", err)
     throw new NotSupported("body", "xml", `${err}`)
   }
 }
 
-app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
+app.post("/decision", authMiddleware, upload.single(FILE_FIELD), async (req, res, next) => {
   try {
     const file = parseFile(req.file);
     const body = parseBody(req.body[BODY_FIELD]);
@@ -85,7 +87,7 @@ app.post("/decision", upload.single(FILE_FIELD), async (req, res, next) => {
   }
 });
 
-app.get("/decisions/status", async (req, res, next) => {
+app.get("/decisions/status", authMiddleware, async (req, res, next) => {
   try {
     const maybeQuery = parseStatusQuery(req.query)
     if (maybeQuery.error) throw toNotSupported("req.query", req.query, maybeQuery.error)
