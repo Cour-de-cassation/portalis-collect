@@ -1,7 +1,5 @@
 import { Request, Response, Router, urlencoded } from "express"
-import { NotSupported, UnauthorizedError } from "../services/error"
 import { JWT_EXPIRATION_SECONDS } from "../config/env"
-import { responseLog } from "./logger";
 import * as jwtUtils from "../utils/jwt"
 import { logger } from "../config/logger"
 
@@ -9,10 +7,6 @@ const router = Router()
 
 router.post("/token", urlencoded({ extended: false }), (req: Request, res: Response) => {
   try {
-    const { clientId, clientSecret } = jwtUtils.extractClientCredentials(
-      req.body,
-      req.headers.authorization ?? ''
-    )
 
     const grantType = req.body?.grant_type
     if (grantType !== 'client_credentials') {
@@ -22,6 +16,10 @@ router.post("/token", urlencoded({ extended: false }), (req: Request, res: Respo
       })
     }
 
+    const { clientId, clientSecret } = jwtUtils.extractClientCredentials(
+      req.body,
+      req.headers.authorization ?? ''
+    )
     if (!clientId || !clientSecret) {
       return res.status(401).json({
         error: 'invalid_client',

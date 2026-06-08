@@ -27,7 +27,10 @@ const authentication = (req: Request, res: Response, next: NextFunction) => {
       stack: ''
     })
 
-    return res.status(401).json({ error: 'Invalid or expired token' })
+    return res.status(401).json({
+      error: 'invalid_token',
+      error_description: 'The provided token is invalid or has expired.'
+    })
   }
 
   next();

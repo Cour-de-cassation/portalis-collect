@@ -3,7 +3,6 @@ import { JWT_CLIENT_ID, JWT_CLIENT_SECRET, JWT_ISSUER, JWT_ALGORITHM, JWT_SECRET
 import { timingSafeEqual } from "crypto"
 import { logger } from "../config/logger"
 
-// Private const
 const JWT_SUBJECT = 'system'
 const JWT_ACCEPTED_ISSUERS = process.env.JWT_ACCEPTED_ISSUERS
   ? process.env.JWT_ACCEPTED_ISSUERS.split(',').map((s) => s.trim())
