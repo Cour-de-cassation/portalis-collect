@@ -11,3 +11,7 @@ s3_region: "eu-west-paris-1"
 api_port: "3015"
 
 s3_bucket_name: "portalis-collect-bucket"
+
+auth_type: "jwt"
+jwt_algorithm: "HS256"
+jwt_expiration_seconds: "900"
