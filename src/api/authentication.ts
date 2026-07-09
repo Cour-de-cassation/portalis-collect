@@ -8,6 +8,7 @@ import { NotSupported, UnauthorizedError } from "../services/error";
 import { validateBasic, validateOAuth } from "../services/authentication";
 import { ACCESS_TOKEN_LIFETIME_IN_SECONDS, AUTH_STRATEGY, ENV } from "../config/env";
 import { responseLog } from "./logger";
+import { logger } from "../config/logger";
 
 const basicAuthHandler = (
   req: Request,
@@ -61,7 +62,11 @@ function oAuthTokenRoute(oAuthServer: OAuth2Server) {
     res: Response,
     next: NextFunction
   ) => {
-    if (ENV === "PREPROD") console.dir(req.body, { depth: null })
+    if (ENV === "PREPROD") logger.info({
+      path: __filename,
+      operations: ['collect', 'authentication'],
+      message: JSON.stringify(req.body)
+    })
     try {
       const t = await oAuthServer.token(
         new oAuthRequest(req),
