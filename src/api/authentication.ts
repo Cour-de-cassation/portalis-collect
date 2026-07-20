@@ -42,6 +42,11 @@ function oAuthHandler(
     next: NextFunction
   ) => {
     try {
+      if (ENV === "PREPROD") logger.info({
+        path: __filename,
+        operations: ['collect', 'authentication'],
+        message: JSON.stringify(req.header)
+      })
       const authenticatedToken = await oAuthServer.authenticate(
         new oAuthRequest(req),
         new oAuthResponse(res)
@@ -49,6 +54,12 @@ function oAuthHandler(
       if (!authenticatedToken) throw new Error("AuthenticatedToken is missing.");
       return next();
     } catch (err) {
+      if (ENV === "PREPROD") logger.error({
+        path: __filename,
+        operations: ['collect', 'authentication'],
+        stack: `${err}`,
+        message: `${err}`
+      })
       return next(
         new UnauthorizedError("Token or credentials seems incorrect.")
       );
