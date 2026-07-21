@@ -44,7 +44,7 @@ function oAuthHandler(
       if (ENV === "PREPROD") req.log.info({
         path: __filename,
         operations: ['collect', 'authentication'],
-        message: req.headers.authorization
+        message: `token received: ${req.headers.authorization}`
       })
       const authenticatedToken = await oAuthServer.authenticate(
         new oAuthRequest(req),
@@ -53,12 +53,7 @@ function oAuthHandler(
       if (!authenticatedToken) throw new Error("AuthenticatedToken is missing.");
       return next();
     } catch (err) {
-      if (ENV === "PREPROD") req.log.error({
-        path: __filename,
-        operations: ['collect', 'authentication'],
-        stack: `${err}`,
-        message: `${err}`
-      })
+      if (ENV === "PREPROD") console.error(err)
       return next(
         new UnauthorizedError("Token or credentials seems incorrect.")
       );
