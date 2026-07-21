@@ -8,7 +8,6 @@ import { NotSupported, UnauthorizedError } from "../services/error";
 import { validateBasic, validateOAuth } from "../services/authentication";
 import { ACCESS_TOKEN_LIFETIME_IN_SECONDS, AUTH_STRATEGY, ENV } from "../config/env";
 import { responseLog } from "./logger";
-import { logger } from "../config/logger";
 
 const basicAuthHandler = (
   req: Request,
@@ -42,10 +41,10 @@ function oAuthHandler(
     next: NextFunction
   ) => {
     try {
-      if (ENV === "PREPROD") logger.info({
+      if (ENV === "PREPROD") req.log.info({
         path: __filename,
         operations: ['collect', 'authentication'],
-        message: JSON.stringify(req.header)
+        message: req.headers.authorization
       })
       const authenticatedToken = await oAuthServer.authenticate(
         new oAuthRequest(req),
@@ -54,7 +53,7 @@ function oAuthHandler(
       if (!authenticatedToken) throw new Error("AuthenticatedToken is missing.");
       return next();
     } catch (err) {
-      if (ENV === "PREPROD") logger.error({
+      if (ENV === "PREPROD") req.log.error({
         path: __filename,
         operations: ['collect', 'authentication'],
         stack: `${err}`,
@@ -73,7 +72,7 @@ function oAuthTokenRoute(oAuthServer: OAuth2Server) {
     res: Response,
     next: NextFunction
   ) => {
-    if (ENV === "PREPROD") logger.info({
+    if (ENV === "PREPROD") req.log.info({
       path: __filename,
       operations: ['collect', 'authentication'],
       message: JSON.stringify(req.body)
