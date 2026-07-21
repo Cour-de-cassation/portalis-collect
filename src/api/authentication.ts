@@ -6,7 +6,7 @@ import OAuth2Server, {
 
 import { NotSupported, UnauthorizedError } from "../services/error";
 import { validateBasic, validateOAuth } from "../services/authentication";
-import { ACCESS_TOKEN_LIFETIME_IN_SECONDS, AUTH_STRATEGY, ENV } from "../config/env";
+import { ACCESS_TOKEN_LIFETIME_IN_SECONDS, AUTH_STRATEGY, AUTHENTICATION_ID, ENV } from "../config/env";
 import { responseLog } from "./logger";
 
 const basicAuthHandler = (
@@ -72,17 +72,17 @@ function oAuthTokenRoute(oAuthServer: OAuth2Server) {
     res: Response,
     next: NextFunction
   ) => {
-    if (ENV === "PREPROD") req.log.info({
-      path: __filename,
-      operations: ['collect', 'authentication'],
-      message: JSON.stringify(req.body)
-    })
     try {
       const t = await oAuthServer.token(
         new oAuthRequest(req),
         new oAuthResponse(res),
         {} // TS & JS of oAuth2Server are weird -> options seems needed even if it's empty.
       );
+      if (ENV === "PREPROD" && req.body.client_id === AUTHENTICATION_ID) req.log.info({
+      path: __filename,
+      operations: ['collect', 'authentication'],
+      message: `token created: ${t.accessToken}`
+    })
       res.send({
         accessToken: t.accessToken,
         accessTokenExpiresAt: t.accessTokenExpiresAt,
