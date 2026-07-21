@@ -53,7 +53,17 @@ function oAuthHandler(
       if (!authenticatedToken) throw new Error("AuthenticatedToken is missing.");
       return next();
     } catch (err) {
-      if (ENV === "PREPROD") console.error(err)
+      if (ENV === "PREPROD") err instanceof Error ? req.log.error({
+        path: __filename,
+        operations: ['collect', 'authentication'],
+        stack: err.stack,
+        message: err.message
+      }) : req.log.error({
+        path: __filename,
+        operations: ['collect', 'authentication'],
+        stack: "unknown error",
+        message: `${err ?? "undefined"}`
+      })
       return next(
         new UnauthorizedError("Token or credentials seems incorrect.")
       );
