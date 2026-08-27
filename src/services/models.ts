@@ -37,8 +37,9 @@ const schemaPortalisMetadatas = zod.object({
       audience_dossier: zod.array(
         zod.object({
           formation: zod.string().optional(),
-          chronologie: zod.string().optional()
-        })
+          chronologie: zod.string().optional(),
+          composition: zod.array(zod.unknown()).optional(),
+        }),
       )
     })
     .optional(),
@@ -77,7 +78,8 @@ const schemaPortalisMetadatas = zod.object({
     libelle_court: zod.string(),
     libelle_long: zod.string(),
     code_srj: zod.string()
-  })
+  }),
+  parties: zod.array(zod.unknown()).optional()
 })
 const pdfMetadata = zod.object({
   root: zod.object({ document: schemaPortalisMetadatas })
