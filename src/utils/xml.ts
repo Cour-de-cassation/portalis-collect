@@ -14,7 +14,7 @@ const cphMetadatasArray = [
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '',
-  isArray: (_, jpath) => cphMetadatasArray.includes(jpath.slice('root.document.'.length)),
+  isArray: (_, jpath) => typeof jpath === "string" && cphMetadatasArray.includes(jpath.slice('root.document.'.length)),
   transformTagName: (tagName) => {
     if (!tagName) {
       console.log(tagName)
