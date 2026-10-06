@@ -6,7 +6,9 @@ const cphMetadatasArray = [
   // We precise wich field is an array even if there are only one object inside - based on xml parser detection of array
   'audiences_dossier.audience_dossier',
   'decision.codes_decision.code_decision',
-  'evenement_porteur.caracteristiques.caracteristique'
+  'evenement_porteur.caracteristiques.caracteristique',
+  'audiences_dossier.audience_dossier.composition',
+  'parties',
 ]
 
 const xmlParser = new XMLParser({
