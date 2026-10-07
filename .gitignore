@@ -3,3 +3,4 @@ node_modules
 .npm
 .env
 tsconfig.tsbuildinfo
+.ash_history
