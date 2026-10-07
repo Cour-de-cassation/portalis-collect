@@ -17,7 +17,10 @@ if (process.env.JWT_ACCEPTED_ISSUERS == null)
   throw new MissingValue("process.env.JWT_ACCEPTED_ISSUERS");
 if (process.env.JWT_ALGORITHM == null)
   throw new MissingValue("process.env.JWT_ALGORITHM");
-if (process.env.JWT_EXPIRATION_SECONDS == null)
+if (
+  process.env.JWT_EXPIRATION_SECONDS == null ||
+  isNaN(Number(process.env.JWT_EXPIRATION_SECONDS))
+)
   throw new MissingValue("process.env.JWT_EXPIRATION_SECONDS");
 if (process.env.FILE_DB_URL == null)
   throw new MissingValue("process.env.FILE_DB_URL");
@@ -33,9 +36,11 @@ if (process.env.S3_SECRET_KEY == null)
   throw new MissingValue("process.env.S3_SECRET_KEY");
 if (process.env.S3_URL == null) throw new MissingValue("process.env.S3_URL");
 
+export const JWT_EXPIRATION_SECONDS = Number(
+  process.env.JWT_EXPIRATION_SECONDS,
+);
 export const {
   AUTH_TYPE,
-  JWT_EXPIRATION_SECONDS,
   JWT_CLIENT_ID,
   JWT_CLIENT_SECRET,
   JWT_SECRET,

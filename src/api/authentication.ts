@@ -1,13 +1,12 @@
-import { Request, Response, Router, urlencoded } from "express"
-import { JWT_EXPIRATION_SECONDS } from "../config/env"
-import * as jwtUtils from "../utils/jwt"
-import { logger } from "../config/logger"
+import { Request, Response, Router, urlencoded } from 'express'
+import { JWT_EXPIRATION_SECONDS } from '../config/env'
+import * as jwtUtils from '../utils/jwt'
+import { logger } from '../config/logger'
 
 const router = Router()
 
-router.post("/token", urlencoded({ extended: false }), (req: Request, res: Response) => {
+router.post('/token', urlencoded({ extended: false }), (req: Request, res: Response) => {
   try {
-
     const grantType = req.body?.grant_type
     if (grantType !== 'client_credentials') {
       return res.status(400).json({
@@ -43,9 +42,8 @@ router.post("/token", urlencoded({ extended: false }), (req: Request, res: Respo
     }
 
     return res.status(200).json({
-      access_token: accessToken,
-      token_type: 'Bearer',
-      expires_in: parseInt(JWT_EXPIRATION_SECONDS, 10)
+      accessToken: accessToken,
+      accessTokenExpiresAt: new Date(Date.now() + JWT_EXPIRATION_SECONDS * 1000)
     })
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error))
