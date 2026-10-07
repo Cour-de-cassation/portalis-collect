@@ -14,7 +14,7 @@ jest.mock('jsonwebtoken', () => {
   const actual = jest.requireActual('jsonwebtoken')
   return {
     ...actual,
-    sign: jest.fn((...args) => actual.sign(...args)), // vrai comportement par défaut
+    sign: jest.fn((...args) => actual.sign(...args)) // vrai comportement par défaut
   }
 })
 
@@ -68,7 +68,10 @@ describe('jwtUtils', () => {
     })
 
     it('should accept a token from any accepted issuer', () => {
-      const decoded = signAndVerify({ issuer: TEST_ISSUER_OTHER }) as jwt.JwtPayload & { exp: number; iat: number }
+      const decoded = signAndVerify({ issuer: TEST_ISSUER_OTHER }) as jwt.JwtPayload & {
+        exp: number
+        iat: number
+      }
 
       expect(decoded.clientId).toBe(TEST_CLIENT)
       expect(decoded.iss).toBe(TEST_ISSUER_OTHER)

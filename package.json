@@ -6,13 +6,17 @@
   "author": "",
   "license": "ISC",
   "scripts": {
+    "format": "prettier \"src/**/*.ts\" --check",
+    "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
+    "fix": "eslint \"src/**/*.ts\" --fix && prettier \"src/**/*.ts\" --write",
+    "test": "jest --detectOpenHandles -c jest.config.js",
     "start:docker": "docker compose up -d",
     "start:watch": "nodemon --watch 'src/**' --ext 'ts,json' --exec 'npx ts-node src/server.ts'",
-    "test": "jest --detectOpenHandles -c jest.config.js",
     "build": "tsc --build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.879.0",
+    "@node-oauth/oauth2-server": "5.2.1",
     "axios": "1.11.0",
     "cron": "4.3.3",
     "dbsder-api-types": "3.0.0",
@@ -22,7 +26,7 @@
     "form-data": "4.0.4",
     "helmet": "8.1.0",
     "html-to-text": "9.0.5",
-    "jsonwebtoken": "^9.0.3",
+    "jsonwebtoken": "9.0.3",
     "mongodb": "6.19.0",
     "multer": "2.0.2",
     "pdf-lib": "1.17.1",
@@ -38,11 +42,16 @@
     "@types/multer": "2.0.0",
     "@types/node": "24.3.0",
     "@types/uuid": "10.0.0",
+    "eslint": "9.39.4",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.5",
     "jest": "30.4.2",
     "nodemon": "3.1.10",
     "pino-pretty": "13.1.1",
+    "prettier": "3.8.3",
     "ts-jest": "29.4.9",
     "ts-node": "10.9.2",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.59.3"
   }
 }

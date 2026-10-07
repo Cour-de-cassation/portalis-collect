@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express"
-import * as jwtUtils from "../utils/jwt"
-import { logger } from "../config/logger"
+import { Request, Response, NextFunction } from 'express'
+import * as jwtUtils from '../utils/jwt'
+import { logger } from '../config/logger'
 
 const authentication = (req: Request, res: Response, next: NextFunction) => {
   const token = jwtUtils.extractBearerToken(req.headers.authorization ?? '')
@@ -33,7 +33,7 @@ const authentication = (req: Request, res: Response, next: NextFunction) => {
     })
   }
 
-  next();
-};
+  next()
+}
 
-export default authentication;
+export default authentication
