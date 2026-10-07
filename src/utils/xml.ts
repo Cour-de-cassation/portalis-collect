@@ -17,7 +17,6 @@ const xmlParser = new XMLParser({
   isArray: (_, jpath) => cphMetadatasArray.includes(jpath.slice('root.document.'.length)),
   transformTagName: (tagName) => {
     if (!tagName) {
-      console.log(tagName)
       return 'undefined'
     } else {
       return tagName.toLowerCase()

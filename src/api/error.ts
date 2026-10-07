@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import { isCustomError } from '../services/error'
 import { responseLog } from './logger'
 
+/* eslint-disable @typescript-eslint/no-unused-vars -- maybe we can remove */
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
   req.log.error({
     path: 'src/api/error.ts',

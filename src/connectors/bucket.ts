@@ -1,4 +1,4 @@
-import { S3Client, S3ClientConfig, PutObjectCommand, _Object } from '@aws-sdk/client-s3'
+import { S3Client, S3ClientConfig, PutObjectCommand } from '@aws-sdk/client-s3'
 import { S3_ACCESS_KEY, S3_BUCKET_NAME, S3_REGION, S3_SECRET_KEY, S3_URL } from '../config/env'
 
 const S3Options: S3ClientConfig = {

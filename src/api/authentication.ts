@@ -31,7 +31,11 @@ function oAuthHandler(oAuthServer: OAuth2Server) {
       if (!authenticatedToken) throw new Error('AuthenticatedToken is missing.')
       return next()
     } catch (err) {
-      return next(new UnauthorizedError('Token or credentials seems incorrect.'))
+      return next(
+        new UnauthorizedError(
+          err instanceof Error ? err.message : 'Token or credentials seems incorrect.'
+        )
+      )
     }
   }
 }

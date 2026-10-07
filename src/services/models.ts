@@ -18,7 +18,9 @@ const schemaPublicationRules = zod.object({
   sommaireInteretParticulier: zod.string().optional()
 })
 export type PublicationRules = zod.infer<typeof schemaPublicationRules>
-export function parsePublicationRules(maybePublicationRules: any): PublicationRules | NotSupported {
+export function parsePublicationRules(
+  maybePublicationRules: unknown
+): PublicationRules | NotSupported {
   const result = schemaPublicationRules.safeParse(maybePublicationRules)
   if (result.error) return toNotSupported('publicationRules', maybePublicationRules, result.error)
   return result.data
@@ -81,7 +83,7 @@ const pdfMetadata = zod.object({
   root: zod.object({ document: schemaPortalisMetadatas })
 })
 export type PortalisMetadatas = zod.infer<typeof schemaPortalisMetadatas>
-export function parsePortalisMetadatas(portalisMetadatas: any): {
+export function parsePortalisMetadatas(portalisMetadatas: unknown): {
   root: { document: PortalisMetadatas }
 } {
   const result = pdfMetadata.safeParse(portalisMetadatas)
