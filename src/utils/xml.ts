@@ -8,7 +8,7 @@ const cphMetadatasArray = [
   'decision.codes_decision.code_decision',
   'evenement_porteur.caracteristiques.caracteristique',
   'audiences_dossier.audience_dossier.composition',
-  'parties',
+  'parties'
 ]
 
 const xmlParser = new XMLParser({

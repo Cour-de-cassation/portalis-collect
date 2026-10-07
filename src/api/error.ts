@@ -1,11 +1,11 @@
-import { NextFunction, Request, Response } from "express";
-import { isCustomError } from "../services/error";
-import { responseLog } from "./logger";
+import { NextFunction, Request, Response } from 'express'
+import { isCustomError } from '../services/error'
+import { responseLog } from './logger'
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-  req.log.error({ 
-    path: "src/api/error.ts", 
-    operations: ["other", `${req.method} ${req.path}`],
+  req.log.error({
+    path: 'src/api/error.ts',
+    operations: ['other', `${req.method} ${req.path}`],
     message: err.message,
     stack: err.stack
   })
