@@ -3,7 +3,6 @@ import { MissingValue } from '../services/error'
 
 if (!process.env.ENV) dotenv.config()
 
-if (process.env.AUTH_TYPE == null) throw new MissingValue('process.env.AUTH_TYPE')
 if (process.env.JWT_CLIENT_ID == null) throw new MissingValue('process.env.JWT_CLIENT_ID')
 if (process.env.JWT_CLIENT_SECRET == null) throw new MissingValue('process.env.JWT_CLIENT_SECRET')
 if (process.env.JWT_SECRET == null) throw new MissingValue('process.env.JWT_SECRET')
@@ -24,7 +23,6 @@ if (process.env.S3_URL == null) throw new MissingValue('process.env.S3_URL')
 
 export const JWT_EXPIRATION_SECONDS = Number(process.env.JWT_EXPIRATION_SECONDS)
 export const {
-  AUTH_TYPE,
   JWT_CLIENT_ID,
   JWT_CLIENT_SECRET,
   JWT_SECRET,

@@ -2,7 +2,6 @@ process.env = {
   ...process.env,
   ENV: 'test',
   PORT: '3015',
-  AUTH_TYPE: 'jwt',
   JWT_CLIENT_ID: 'jest-client-id',
   JWT_CLIENT_SECRET: 'jest-client-secret',
   JWT_SECRET: 'jest-secret',
@@ -15,5 +14,5 @@ process.env = {
   S3_ACCESS_KEY: 'test-access-key',
   S3_SECRET_KEY: 'test-secret-key',
   S3_REGION: 'eu-west-paris-1',
-  S3_BUCKET_NAME: 'test-bucket',
+  S3_BUCKET_NAME: 'test-bucket'
 }
