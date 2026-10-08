@@ -19,18 +19,17 @@ export class NotSupported extends Error {
 
 export function toNotSupported(variableName: string, variableValue: unknown, error: Error) {
   if (error instanceof ParseError) {
-
     return new NotSupported(
       variableName,
       variableValue,
-      `'${variableName}' parse error: ${stringifyError(error)}`,
+      `'${variableName}' parse error: ${stringifyError(error)}`
     )
   }
   return Object.assign(error, new NotSupported(variableName, variableValue, error.message))
 }
 
 export class MissingValue extends Error {
-  type = "missingValue" as const
+  type = 'missingValue' as const
   variableName: string
   constructor(variableName: string, message?: string) {
     const _message = message ? message : `${variableName} is required but missing.`
@@ -38,11 +37,11 @@ export class MissingValue extends Error {
     this.variableName = variableName
   }
 }
-export function isMissingValue(x: any) {
-  return x?.type === "missingValue" && x instanceof Error
+export function isMissingValue(x: unknown) {
+  return !!x && x instanceof Error && 'type' in x && x.type === 'missingValue'
 }
 export class NotFound extends Error {
-  type = "notFound" as const
+  type = 'notFound' as const
   variableName: string
   constructor(variableName: string, message?: string) {
     const _message = message ? message : `${variableName} not found.`
@@ -52,29 +51,33 @@ export class NotFound extends Error {
 }
 
 export class UnauthorizedError extends Error {
-  type = "unauthorizedError" as const
+  type = 'unauthorizedError' as const
   constructor(message?: string) {
-    const _message = message ? message : `Resource needs to be logged to access. Currently unauthorized.`
+    const _message = message
+      ? message
+      : `Resource needs to be logged to access. Currently unauthorized.`
     super(_message)
   }
 }
 
 export class ForbiddenError extends Error {
-  type = "forbiddenError" as const
+  type = 'forbiddenError' as const
   constructor(message?: string) {
-    const _message = message ? message : `Your connexion cannot access to this resource. Currently forbidden.`
+    const _message = message
+      ? message
+      : `Your connexion cannot access to this resource. Currently forbidden.`
     super(_message)
   }
 }
 
 export class UnexpectedError extends Error {
-  type = "unexpectedError" as const
+  type = 'unexpectedError' as const
   constructor(message?: string) {
     const _message = message ? message : `Unexepected error occurs.`
     super(_message)
   }
 }
-export function toUnexpectedError(error: any) {
+export function toUnexpectedError(error: unknown) {
   if (!(error instanceof Error)) return new UnexpectedError(`${error}`)
 
   const unexpected = new UnexpectedError()
@@ -83,16 +86,26 @@ export function toUnexpectedError(error: any) {
   return unexpected
 }
 
-type CustomError = NotSupported | MissingValue | NotFound | UnauthorizedError | ForbiddenError | UnexpectedError
+type CustomError =
+  | NotSupported
+  | MissingValue
+  | NotFound
+  | UnauthorizedError
+  | ForbiddenError
+  | UnexpectedError
 
-export function isCustomError(x: any): x is CustomError {
+export function isCustomError(x: unknown): x is CustomError {
+  const isValidX = !!x && x instanceof Error && 'type' in x
+  if (!isValidX) return false
+
   switch (x.type) {
-    case "notSupported":
-    case "notFound":
-    case "missingValue":
-    case "unauthorizedError":
-    case "unexpectedError":
-      return x instanceof Error
+    case 'notSupported':
+    case 'notFound':
+    case 'missingValue':
+    case 'unauthorizedError':
+    case 'unexpectedError':
+    case 'forbiddenError':
+      return true
     default:
       return false
   }
