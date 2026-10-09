@@ -5,15 +5,14 @@ import {
   JWT_ISSUER,
   JWT_ALGORITHM,
   JWT_SECRET,
-  JWT_EXPIRATION_SECONDS
+  JWT_EXPIRATION_SECONDS,
+  JWT_ACCEPTED_ISSUERS
 } from '../config/env'
 import { timingSafeEqual } from 'crypto'
 import { logger } from '../config/logger'
 
 const JWT_SUBJECT = 'system'
-const JWT_ACCEPTED_ISSUERS = process.env.JWT_ACCEPTED_ISSUERS
-  ? process.env.JWT_ACCEPTED_ISSUERS.split(',').map((s) => s.trim())
-  : [JWT_ISSUER]
+const acceptedIssuers = JWT_ACCEPTED_ISSUERS.split(',').map((s) => s.trim())
 
 export function generateToken(clientId: string): string | null {
   try {
@@ -45,7 +44,7 @@ export function verifyToken(token: string): jwt.JwtPayload | null {
   try {
     const options = {
       algorithms: [JWT_ALGORITHM as jwt.Algorithm],
-      issuer: JWT_ACCEPTED_ISSUERS as [string, ...string[]]
+      issuer: acceptedIssuers as [string, ...string[]]
     }
 
     return jwt.verify(token, JWT_SECRET, options) as jwt.JwtPayload
@@ -108,12 +107,7 @@ export function extractClientCredentials(
 }
 
 export function isValidClient(clientId: string, clientSecret: string): boolean {
-  return (
-    clientId !== null &&
-    clientSecret !== null &&
-    safeCompare(clientId, JWT_CLIENT_ID) &&
-    safeCompare(clientSecret, JWT_CLIENT_SECRET)
-  )
+  return safeCompare(clientId, JWT_CLIENT_ID) && safeCompare(clientSecret, JWT_CLIENT_SECRET)
 }
 
 function safeCompare(userInput: string, secret: string): boolean {

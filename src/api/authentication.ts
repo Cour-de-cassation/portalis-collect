@@ -9,9 +9,14 @@ router.post('/token', urlencoded({ extended: false }), (req: Request, res: Respo
   try {
     const grantType = req.body?.grant_type
     if (grantType !== 'client_credentials') {
+      logger.warn({
+        path: 'src/api/authentication.ts',
+        operations: ['other', 'POST /token'],
+        message: 'Only client_credentials grant type is supported.'
+      })
       return res.status(400).json({
         error: 'unsupported_grant_type',
-        error_description: 'Only client_credentials grant type is supported'
+        error_description: 'Only client_credentials grant type is supported.'
       })
     }
 
@@ -20,16 +25,26 @@ router.post('/token', urlencoded({ extended: false }), (req: Request, res: Respo
       req.headers.authorization ?? ''
     )
     if (!clientId || !clientSecret) {
+      logger.warn({
+        path: 'src/api/authentication.ts',
+        operations: ['other', 'POST /token'],
+        message: 'Invalid client credentials.'
+      })
       return res.status(401).json({
         error: 'invalid_client',
-        error_description: 'Invalid client credentials'
+        error_description: 'Invalid client credentials.'
       })
     }
 
     if (!jwtUtils.isValidClient(clientId, clientSecret)) {
+      logger.warn({
+        path: 'src/api/authentication.ts',
+        operations: ['other', 'POST /token'],
+        message: `Invalid client credentials.`
+      })
       return res.status(401).json({
         error: 'invalid_client',
-        error_description: 'Invalid client credentials'
+        error_description: 'Invalid client credentials.'
       })
     }
 
