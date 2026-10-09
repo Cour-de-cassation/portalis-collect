@@ -1,10 +1,11 @@
 ---
 s3_access_key: "{{ vault_s3_access_key }}"
 s3_secret_key: "{{ vault_s3_secret_key }}"
-authentication_id: "portalis"
-authentication_key: "{{ vault_authentication_key }}"
-auth_strategy: "oAuth2"
-access_token_lifetime_in_seconds: "{{ vault_access_token_lifetime_in_seconds }}"
 file_db_url: "{{ vault_file_db_url }}"
+jwt_client_id: "portalis"
+jwt_client_secret: "{{ vault_jwt_client_secret }}"
+jwt_secret: "{{ vault_jwt_secret }}"
+jwt_issuer: "portalis-prod"
+jwt_accepted_issuers: "portalis-prod"
 
 env: "PROD"

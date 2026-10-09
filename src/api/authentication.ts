@@ -1,83 +1,79 @@
-import { NextFunction, Request, Response, Router, urlencoded } from 'express'
-import OAuth2Server, {
-  Request as oAuthRequest,
-  Response as oAuthResponse
-} from '@node-oauth/oauth2-server'
+import { Request, Response, Router, urlencoded } from 'express'
+import { JWT_EXPIRATION_SECONDS } from '../config/env'
+import * as jwtUtils from '../utils/jwt'
+import { logger } from '../config/logger'
 
-import { NotSupported, UnauthorizedError } from '../services/error'
-import { validateBasic, validateOAuth } from '../services/authentication'
-import { ACCESS_TOKEN_LIFETIME_IN_SECONDS, AUTH_STRATEGY } from '../config/env'
-import { responseLog } from './logger'
+const router = Router()
 
-const basicAuthHandler = (req: Request, _: Response, next: NextFunction) => {
-  if (req.headers.authorization && req.headers.authorization.startsWith('Basic ')) {
-    const base64Credentials = req.headers.authorization.slice('Basic '.length)
-    const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii')
-    const [username, password] = credentials.split(':')
-
-    if (!!username && !!password && !!validateBasic(username, password)) return next()
-  }
-
-  return next(new UnauthorizedError('Basic auth Username or password seems incorrect.'))
-}
-
-function oAuthHandler(oAuthServer: OAuth2Server) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const authenticatedToken = await oAuthServer.authenticate(
-        new oAuthRequest(req),
-        new oAuthResponse(res)
-      )
-      if (!authenticatedToken) throw new Error('AuthenticatedToken is missing.')
-      return next()
-    } catch (err) {
-      return next(
-        new UnauthorizedError(
-          err instanceof Error ? err.message : 'Token or credentials seems incorrect.'
-        )
-      )
-    }
-  }
-}
-
-function oAuthTokenRoute(oAuthServer: OAuth2Server) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const t = await oAuthServer.token(
-        new oAuthRequest(req),
-        new oAuthResponse(res),
-        {} // TS & JS of oAuth2Server are weird -> options seems needed even if it's empty.
-      )
-      res.send({
-        accessToken: t.accessToken,
-        accessTokenExpiresAt: t.accessTokenExpiresAt
+router.post('/token', urlencoded({ extended: false }), (req: Request, res: Response) => {
+  try {
+    const grantType = req.body?.grant_type
+    if (grantType !== 'client_credentials') {
+      logger.warn({
+        path: 'src/api/authentication.ts',
+        operations: ['other', 'POST /token'],
+        message: 'Only client_credentials grant type is supported.'
       })
-      return responseLog(req, res)
-    } catch (err) {
-      next(
-        new UnauthorizedError(err instanceof Error ? err.message : 'Credentials seems incorrect.')
-      )
+      return res.status(400).json({
+        error: 'unsupported_grant_type',
+        error_description: 'Only client_credentials grant type is supported.'
+      })
     }
+
+    const { clientId, clientSecret } = jwtUtils.extractClientCredentials(
+      req.body,
+      req.headers.authorization ?? ''
+    )
+    if (!clientId || !clientSecret) {
+      logger.warn({
+        path: 'src/api/authentication.ts',
+        operations: ['other', 'POST /token'],
+        message: 'Invalid client credentials.'
+      })
+      return res.status(401).json({
+        error: 'invalid_client',
+        error_description: 'Invalid client credentials.'
+      })
+    }
+
+    if (!jwtUtils.isValidClient(clientId, clientSecret)) {
+      logger.warn({
+        path: 'src/api/authentication.ts',
+        operations: ['other', 'POST /token'],
+        message: `Invalid client credentials.`
+      })
+      return res.status(401).json({
+        error: 'invalid_client',
+        error_description: 'Invalid client credentials.'
+      })
+    }
+
+    const accessToken = jwtUtils.generateToken(clientId)
+    if (!accessToken) {
+      return res.status(500).json({
+        error: 'server_error',
+        error_description: 'Failed to generate token'
+      })
+    }
+
+    return res.status(200).json({
+      accessToken: accessToken,
+      accessTokenExpiresAt: new Date(Date.now() + JWT_EXPIRATION_SECONDS * 1000)
+    })
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error({
+      path: __filename,
+      operations: ['other', 'token'],
+      message: `Token generation error: ${err.message}`,
+      stack: err.stack
+    })
+
+    return res.status(500).json({
+      error: 'server_error',
+      error_description: 'Internal server error'
+    })
   }
-}
+})
 
-function authRouteConstructor(): Router {
-  const app = Router()
-
-  if (AUTH_STRATEGY === 'basic') {
-    app.use(basicAuthHandler)
-    return app
-  }
-
-  const accessTokenLifetime =
-    ACCESS_TOKEN_LIFETIME_IN_SECONDS == null ? NaN : parseInt(ACCESS_TOKEN_LIFETIME_IN_SECONDS)
-  if (isNaN(accessTokenLifetime))
-    throw new NotSupported('ACCESS_TOKEN_LIFETIME_IN_SECONDS', ACCESS_TOKEN_LIFETIME_IN_SECONDS)
-  const oAuthServer = new OAuth2Server({ model: validateOAuth, accessTokenLifetime })
-
-  app.post('/token', urlencoded({ extended: true }), oAuthTokenRoute(oAuthServer))
-  app.use(oAuthHandler(oAuthServer))
-  return app
-}
-
-export default authRouteConstructor()
+export default router
