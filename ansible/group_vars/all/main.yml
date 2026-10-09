@@ -1,16 +1,16 @@
 ---
 ansible_user: ops
-ansible_python_interpreter: '/home/{{ ansible_user }}/ansible_venv/bin/python'
+ansible_python_interpreter: "/home/{{ ansible_user }}/ansible_venv/bin/python"
 
-api_service: 'api-service'
-portalis_private_name: 'pts.judilibre-prive.local'
+api_service: "api-service"
+portalis_private_name: "pts.judilibre-prive.local"
 
-s3_url: 'http://bucket-service.bucket.svc.cluster.local:9000'
-s3_region: 'eu-west-paris-1'
+s3_url: "http://bucket-service.bucket.svc.cluster.local:9000"
+s3_region: "eu-west-paris-1"
 
-api_port: '3015'
+api_port: "3015"
 
-s3_bucket_name: 'portalis-collect-bucket'
+s3_bucket_name: "portalis-collect-bucket"
 
-jwt_algorithm: 'HS256'
-jwt_expiration_seconds: '900'
+jwt_algorithm: "HS256"
+jwt_expiration_seconds: "900"

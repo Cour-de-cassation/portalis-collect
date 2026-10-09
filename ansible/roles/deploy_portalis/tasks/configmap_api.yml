@@ -9,18 +9,18 @@
       kind: ConfigMap
       metadata:
         name: api-config
-        namespace: '{{ portalis_namespace }}'
+        namespace: "{{ portalis_namespace }}"
         labels:
-          app: '{{ portalis_application }}'
+          app: "{{ portalis_application }}"
       data:
-        ENV: '{{ env }}'
-        PORT: '{{ api_port }}'
-        JWT_CLIENT_ID: '{{ jwt_client_id }}'
-        JWT_ISSUER: '{{ jwt_issuer }}'
-        JWT_ACCEPTED_ISSUERS: '{{ jwt_accepted_issuers }}'
-        JWT_ALGORITHM: '{{ jwt_algorithm }}'
-        JWT_EXPIRATION_SECONDS: '{{ jwt_expiration_seconds }}'
-        S3_URL: '{{ s3_url }}'
-        S3_REGION: '{{ s3_region }}'
-        S3_BUCKET_NAME: '{{ s3_bucket_name }}'
+        ENV: "{{ env }}"
+        PORT: "{{ api_port }}"
+        JWT_CLIENT_ID: "{{ jwt_client_id }}"
+        JWT_ISSUER: "{{ jwt_issuer }}"
+        JWT_ACCEPTED_ISSUERS: "{{ jwt_accepted_issuers }}"
+        JWT_ALGORITHM: "{{ jwt_algorithm }}"
+        JWT_EXPIRATION_SECONDS: "{{ jwt_expiration_seconds }}"
+        S3_URL: "{{ s3_url }}"
+        S3_REGION: "{{ s3_region }}"
+        S3_BUCKET_NAME: "{{ s3_bucket_name }}"
 ...
