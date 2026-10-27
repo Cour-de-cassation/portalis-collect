@@ -12,7 +12,7 @@ router.post('/token', urlencoded({ extended: false }), (req: Request, res: Respo
       logger.warn({
         path: 'src/api/authentication.ts',
         operations: ['other', 'POST /token'],
-        message: 'Only client_credentials grant type is supported.'
+        message: `Unsupported grant type: ${describeTokenRequest(req)}`
       })
       return res.status(400).json({
         error: 'unsupported_grant_type',
@@ -28,7 +28,7 @@ router.post('/token', urlencoded({ extended: false }), (req: Request, res: Respo
       logger.warn({
         path: 'src/api/authentication.ts',
         operations: ['other', 'POST /token'],
-        message: 'Invalid client credentials.'
+        message: `Missing client credentials: ${describeTokenRequest(req, clientId, clientSecret)}`
       })
       return res.status(401).json({
         error: 'invalid_client',
@@ -40,7 +40,7 @@ router.post('/token', urlencoded({ extended: false }), (req: Request, res: Respo
       logger.warn({
         path: 'src/api/authentication.ts',
         operations: ['other', 'POST /token'],
-        message: `Invalid client credentials.`
+        message: `Invalid client credentials: ${describeTokenRequest(req, clientId, clientSecret)}`
       })
       return res.status(401).json({
         error: 'invalid_client',
@@ -75,5 +75,22 @@ router.post('/token', urlencoded({ extended: false }), (req: Request, res: Respo
     })
   }
 })
+
+function describeTokenRequest(
+  req: Request,
+  clientId?: string | null,
+  clientSecret?: string | null
+): string {
+  const authScheme = req.headers.authorization?.split(' ')[0] ?? 'none'
+  return [
+    `content-type: ${req.headers['content-type'] ?? 'none'}`,
+    `grant_type: ${req.body?.grant_type ?? 'missing'}`,
+    `body.client_id: ${req.body?.client_id ? 'present' : 'missing'}`,
+    `body.client_secret: ${req.body?.client_secret ? 'present' : 'missing'}`,
+    `authorization: ${authScheme}`,
+    `client_id: ${clientId ?? 'none'}`,
+    `client_secret: ${clientSecret ? clientSecret.slice(0, 4) : 'none'}`
+  ].join(', ')
+}
 
 export default router

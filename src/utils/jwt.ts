@@ -73,14 +73,17 @@ export function extractClientCredentials(
   body: { client_id?: string; client_secret?: string },
   authHeader: string
 ): { clientId: string | null; clientSecret: string | null } {
-  let result: { clientId: string | null; clientSecret: string | null }
-  let source: string
+  let source = 'none'
+  let result: { clientId: string | null; clientSecret: string | null } = {
+    clientId: null,
+    clientSecret: null
+  }
 
-  if (body?.client_id) {
+  if (body?.client_id && body?.client_secret) {
     source = 'body'
     result = {
       clientId: body.client_id,
-      clientSecret: body.client_secret ?? null
+      clientSecret: body.client_secret
     }
   } else if (authHeader?.startsWith('Basic ')) {
     source = 'Basic header'
@@ -93,9 +96,6 @@ export function extractClientCredentials(
             clientSecret: decoded.substring(colonIndex + 1)
           }
         : { clientId: null, clientSecret: null }
-  } else {
-    source = 'none'
-    result = { clientId: null, clientSecret: null }
   }
 
   logger.info({
