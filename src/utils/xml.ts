@@ -12,9 +12,11 @@ const cphMetadatasArray = [
 ]
 
 const xmlParser = new XMLParser({
+  jPath: true,
   ignoreAttributes: false,
   attributeNamePrefix: '',
-  isArray: (_, jpath) => cphMetadatasArray.includes(jpath.slice('root.document.'.length)),
+  isArray: (_, jpath) =>
+    cphMetadatasArray.includes((jpath as string).slice('root.document.'.length)), // jpath: true means jpath is a string
   transformTagName: (tagName) => {
     if (!tagName) {
       return 'undefined'
