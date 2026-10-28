@@ -1,6 +1,6 @@
 {
   "name": "portalis-collect",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "package to collect portalis",
   "main": "dist/server.js",
   "author": "",
