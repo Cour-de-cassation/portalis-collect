@@ -3,9 +3,14 @@ import { MissingValue } from '../services/error'
 
 if (!process.env.ENV) dotenv.config()
 
-if (process.env.AUTHENTICATION_ID == null) throw new MissingValue('process.env.AUTHENTICATION_ID')
-if (process.env.AUTHENTICATION_KEY == null) throw new MissingValue('process.env.AUTHENTICATION_KEY')
-if (process.env.AUTH_STRATEGY == null) throw new MissingValue('process.env.AUTH_STRATEGY')
+if (!process.env.JWT_CLIENT_ID) throw new MissingValue('process.env.JWT_CLIENT_ID')
+if (!process.env.JWT_CLIENT_SECRET) throw new MissingValue('process.env.JWT_CLIENT_SECRET')
+if (!process.env.JWT_SECRET) throw new MissingValue('process.env.JWT_SECRET')
+if (!process.env.JWT_ISSUER) throw new MissingValue('process.env.JWT_ISSUER')
+if (!process.env.JWT_ACCEPTED_ISSUERS) throw new MissingValue('process.env.JWT_ACCEPTED_ISSUERS')
+if (!process.env.JWT_ALGORITHM) throw new MissingValue('process.env.JWT_ALGORITHM')
+if (!(Number(process.env.JWT_EXPIRATION_SECONDS) > 0))
+  throw new MissingValue('process.env.JWT_EXPIRATION_SECONDS')
 if (process.env.FILE_DB_URL == null) throw new MissingValue('process.env.FILE_DB_URL')
 if (process.env.ENV == null) throw new MissingValue('process.env.ENV')
 if (process.env.PORT == null) throw new MissingValue('process.env.PORT')
@@ -15,11 +20,14 @@ if (process.env.S3_REGION == null) throw new MissingValue('process.env.S3_REGION
 if (process.env.S3_SECRET_KEY == null) throw new MissingValue('process.env.S3_SECRET_KEY')
 if (process.env.S3_URL == null) throw new MissingValue('process.env.S3_URL')
 
+export const JWT_EXPIRATION_SECONDS = Number(process.env.JWT_EXPIRATION_SECONDS)
 export const {
-  ACCESS_TOKEN_LIFETIME_IN_SECONDS,
-  AUTHENTICATION_ID,
-  AUTHENTICATION_KEY,
-  AUTH_STRATEGY,
+  JWT_CLIENT_ID,
+  JWT_CLIENT_SECRET,
+  JWT_SECRET,
+  JWT_ISSUER,
+  JWT_ACCEPTED_ISSUERS,
+  JWT_ALGORITHM,
   FILE_DB_URL,
   ENV,
   PORT,

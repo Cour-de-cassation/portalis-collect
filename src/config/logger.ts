@@ -40,7 +40,7 @@ const loggerOptions: LoggerOptions = {
     },
     log: (content) => ({
       ...content,
-      type: Object.keys(content).includes('decison') ? 'decision' : 'tech',
+      type: Object.keys(content).includes('decision') ? 'decision' : 'tech',
       appName: 'portalis-collect'
     })
   },
@@ -82,7 +82,7 @@ export const loggerHttp: Handler = (req, res, next) => {
       ...loggerOptions.formatters,
       log: (content) => ({
         ...content,
-        type: Object.keys(content).includes('decison') ? 'decision' : 'tech',
+        type: Object.keys(content).includes('decision') ? 'decision' : 'tech',
         appName: 'portalis-collect',
         requestId
       })

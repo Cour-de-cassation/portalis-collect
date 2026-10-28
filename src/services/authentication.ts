@@ -1,53 +1,19 @@
-import { Client, Token, ClientCredentialsModel, User } from '@node-oauth/oauth2-server' // Warn: types of this lib are completely screw
-import { AUTHENTICATION_ID, AUTHENTICATION_KEY } from '../config/env'
+import { Request, Response, NextFunction } from 'express'
+import * as jwtUtils from '../utils/jwt'
+import { UnauthorizedError } from './error'
 
-type ClientExtended = Client & { secret: string; user: { name: string } }
-
-// WARN: there are a trouble with oAuth2 needs.
-// we need to speak about a notmalization between services.
-// credentials are only saved into RAM for now: bad practice.
-
-const savedClients: ClientExtended[] = [
-  {
-    id: AUTHENTICATION_ID,
-    secret: AUTHENTICATION_KEY,
-    grants: ['client_credentials'],
-    user: { name: 'Portalis' }
+const authentication = (req: Request, res: Response, next: NextFunction) => {
+  const token = jwtUtils.extractBearerToken(req.headers.authorization ?? '')
+  if (!token) {
+    return next(new UnauthorizedError('Missing or invalid Authorization header.'))
   }
-]
-let savedTokens: Token[] = []
 
-export function validateBasic(clientId: string, clientSecret: string): ClientExtended | false {
-  const client = savedClients.find((_) => _.id === clientId)
-  if (client && clientSecret === client.secret) return client
-  return false
+  const decoded = jwtUtils.verifyToken(token)
+  if (!decoded) {
+    return next(new UnauthorizedError('The provided token is invalid or has expired.'))
+  }
+
+  next()
 }
 
-function getClient(clientId: string, clientSecret: string): Promise<ClientExtended | false> {
-  return Promise.resolve(validateBasic(clientId, clientSecret))
-}
-
-function saveToken(token: Token, client: ClientExtended, user: User): Promise<Token> {
-  const index = savedTokens.findIndex((_) => _.client.id === client.id)
-
-  if (index === -1) savedTokens = [...savedTokens, { ...token, user, client }]
-  else savedTokens[index] = { ...token, user, client }
-
-  return Promise.resolve({ ...token, user, client })
-}
-
-function getAccessToken(accessToken: string): Promise<Token | undefined> {
-  const savedToken = savedTokens.find((_) => _.accessToken === accessToken)
-  return Promise.resolve(savedToken)
-}
-
-function getUserFromClient(client: ClientExtended): Promise<User> {
-  return Promise.resolve(client.user)
-}
-
-export const validateOAuth: ClientCredentialsModel = {
-  getClient,
-  saveToken,
-  getAccessToken,
-  getUserFromClient
-}
+export default authentication
