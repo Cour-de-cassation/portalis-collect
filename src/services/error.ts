@@ -1,5 +1,3 @@
-import { ParseError, stringifyError } from 'dbsder-api-types'
-
 export class NotSupported extends Error {
   type = 'notSupported' as const
   variableName: string
@@ -18,13 +16,6 @@ export class NotSupported extends Error {
 }
 
 export function toNotSupported(variableName: string, variableValue: unknown, error: Error) {
-  if (error instanceof ParseError) {
-    return new NotSupported(
-      variableName,
-      variableValue,
-      `'${variableName}' parse error: ${stringifyError(error)}`
-    )
-  }
   return Object.assign(error, new NotSupported(variableName, variableValue, error.message))
 }
 
@@ -87,12 +78,7 @@ export function toUnexpectedError(error: unknown) {
 }
 
 type CustomError =
-  | NotSupported
-  | MissingValue
-  | NotFound
-  | UnauthorizedError
-  | ForbiddenError
-  | UnexpectedError
+  NotSupported | MissingValue | NotFound | UnauthorizedError | ForbiddenError | UnexpectedError
 
 export function isCustomError(x: unknown): x is CustomError {
   const isValidX = !!x && x instanceof Error && 'type' in x
