@@ -1,3 +1,4 @@
+import { describe, it, expect, jest } from '@jest/globals'
 import jwt from 'jsonwebtoken'
 import * as jwtUtils from './jwt'
 
@@ -11,10 +12,10 @@ const TEST_SECRET = 'jest-secret'
 const TEST_EXPIRATION_SECONDS = 3600
 
 jest.mock('jsonwebtoken', () => {
-  const actual = jest.requireActual('jsonwebtoken')
+  const actual = jest.requireActual<typeof jwt>('jsonwebtoken')
   return {
     ...actual,
-    sign: jest.fn((...args) => actual.sign(...args)) // vrai comportement par défaut
+    sign: jest.fn(actual.sign) // vrai comportement par défaut
   }
 })
 
